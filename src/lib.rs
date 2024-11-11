@@ -1,6 +1,5 @@
 //! Provides an [inline-allocated list] which statically tracks its length.
 //! 
-//! 
 //! [inline-allocated list]: crate::NList
 
 #![forbid(unsafe_code)]

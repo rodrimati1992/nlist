@@ -1,6 +1,8 @@
 use typewit::{TypeCmp, TypeEq};
 
+use core::fmt::{self, Debug};
 use core::marker::PhantomData;
+
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
@@ -131,6 +133,34 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
 }
+
+
+impl<T, L> Clone for NList<T, L>
+where
+    T: Clone,
+    L: PeanoInt,
+{
+    fn clone(&self) -> Self {
+        self.each_ref().map(T::clone)
+    }
+}
+
+impl<T, L> Debug for NList<T, L>
+where
+    T: Debug,
+    L: PeanoInt,
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let mut fmt = fmt.debug_list();
+
+        self.each_ref().for_each(|_, elem| { _ = fmt.entry(elem); });
+
+        fmt.finish()
+    }
+}
+
+
+
 
 impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// Returns a reference to the first element of the list
