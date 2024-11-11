@@ -5,7 +5,10 @@ use typewit::{TypeCmp, TypeEq, TypeNe};
 
 mod from_const;
 
-pub use self::from_const::{FromUsize, IntoPeano};
+#[doc(no_inline)]
+pub use typewit::const_marker::Usize;
+
+pub use self::from_const::{FromPeano, FromUsize, IntoPeano,IntoUsize};
 
 
 
