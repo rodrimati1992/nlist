@@ -1,0 +1,32 @@
+[package]
+name = "nlist"
+version = "0.0.0"
+authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
+rust-version = "1.65.0"
+edition = "2021"
+license = "Zlib"
+description = "inline-allocated list with statically tracked length"
+documentation = "https://docs.rs/nlist/"
+readme="./README.md"
+keywords = ["no-std"]
+categories = ["no-std", "parsing"]
+repository = "https://github.com/rodrimati1992/nlist/"
+include = [
+    "Cargo.toml", 
+    "src/**/*.rs", 
+    "./README.md",
+    "LICENSE-ZLIB.md", 
+]
+
+
+[features]
+default = ["alloc"]
+alloc = ["typewit/alloc"]
+
+[dependencies.typewit]
+version = "1.8"
+default-features = false
+
+[dependencies.const_panic]
+version = "0.2"
+default-features = false
