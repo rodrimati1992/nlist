@@ -2,6 +2,14 @@ use core::marker::PhantomData;
 
 use typewit::{TypeCmp, TypeEq, TypeNe};
 
+
+mod from_const;
+
+pub use self::from_const::{FromUsize, IntoPeano};
+
+
+
+
 /// Type-level encoding of `0`
 #[derive(Copy, Clone)]
 pub struct Zero;
@@ -29,6 +37,9 @@ pub type IfZeroPI<L, Then, Else> = <L as PeanoInt>::IfZeroPI<Then, Else>;
 /// Type alias form of [`PeanoInt::Add`]
 pub type Add<Lhs, Rhs> = <Lhs as PeanoInt>::Add<Rhs>;
 
+/// Type alias form of [`PeanoInt::Mul`]
+pub type Mul<Lhs, Rhs> = <Lhs as PeanoInt>::Mul<Rhs>;
+
 /// Type alias form of [`PeanoInt::Min`]
 pub type Min<Lhs, Rhs> = <Lhs as PeanoInt>::Min<Rhs>;
 
@@ -51,6 +62,9 @@ pub trait PeanoInt: Copy + 'static {
 
     /// Computes the addition of `Self` and `Rhs`
     type Add<Rhs: PeanoInt>: PeanoInt;
+
+    /// Computes `Self` multiplied by `Rhs`
+    type Mul<Rhs: PeanoInt>: PeanoInt;
 
     /// Computes the minimum of `Self` and `Rhs`
     type Min<Rhs: PeanoInt>: PeanoInt;
@@ -80,6 +94,8 @@ impl PeanoInt for Zero {
 
     type Add<Rhs: PeanoInt> = Rhs;
 
+    type Mul<Rhs: PeanoInt> = Zero;
+
     type Min<Rhs: PeanoInt> = Zero;
 
     type Max<Rhs: PeanoInt> = Rhs;
@@ -105,6 +121,8 @@ where
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Else;
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
+
+    type Mul<Rhs: PeanoInt> = Add<Rhs, Mul<T, Rhs>>;
 
     type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
 

@@ -1,11 +1,12 @@
-/// Constructs an `NList` from a list of elements
+/// Constructs an [`NList`](crate::NList) from a list of elements
 ///
 /// # Example
 ///
 /// ```rust
+/// use nlist::peano;
 /// use nlist::NList;
 ///
-/// let list: NList<u32, _> = nlist::nlist![3, 5, 8, 13];
+/// let list: NList<u32, peano!(4)> = nlist::nlist![3, 5, 8, 13];
 ///
 /// assert_eq!(list.into_vec(), vec![3, 5, 8, 13]);
 ///
@@ -15,6 +16,15 @@
 macro_rules! nlist {
     ($($expr:expr),* $(,)?) => {
         $crate::__nlist!{$($expr)*}
+    }
+}
+
+
+/// Converts an integer constant to a [peano integer](crate::PeanoInt)
+#[macro_export]
+macro_rules! peano {
+    ($expr:expr) => {
+        $crate::peano::FromUsize<$expr>
     }
 }
 

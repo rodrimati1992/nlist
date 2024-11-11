@@ -8,8 +8,8 @@ license = "Zlib"
 description = "inline-allocated list with statically tracked length"
 documentation = "https://docs.rs/nlist/"
 readme="./README.md"
-keywords = ["no-std"]
-categories = ["no-std", "parsing"]
+keywords = ["GADT", "type_witness", "no_std", "list", "data-structure"]
+categories = ["no-std", "data-structures"]
 repository = "https://github.com/rodrimati1992/nlist/"
 include = [
     "Cargo.toml", 
