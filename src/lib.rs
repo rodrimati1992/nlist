@@ -12,6 +12,8 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
+mod macros;
+
 /// Type-level integers which use a unary representation
 pub mod peano;
 
