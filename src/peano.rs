@@ -2,16 +2,12 @@ use core::marker::PhantomData;
 
 use typewit::{TypeCmp, TypeEq, TypeNe};
 
-
 mod from_const;
 
 #[doc(no_inline)]
 pub use typewit::const_marker::Usize;
 
-pub use self::from_const::{FromPeano, FromUsize, IntoPeano,IntoUsize};
-
-
-
+pub use self::from_const::{FromPeano, FromUsize, IntoPeano, IntoUsize};
 
 /// Type-level encoding of `0`
 #[derive(Copy, Clone)]

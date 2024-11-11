@@ -1,6 +1,7 @@
 use const_panic::concat_panic;
 use typewit::{TypeCmp, TypeEq};
 
+use core::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
 use core::fmt::{self, Debug};
 use core::marker::PhantomData;
 
@@ -127,6 +128,8 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 }
 
+////////////////////////////////////////////
+
 /// `Copy` can't be implemented for NList,
 /// you can however use the [`copy`](NList::copy) method.
 impl<T, L> Clone for NList<T, L>
@@ -154,6 +157,122 @@ where
         fmt.finish()
     }
 }
+
+impl<T, U, L, L2> PartialEq<NList<U, L2>> for NList<T, L>
+where
+    T: PartialEq<U>,
+    L: PeanoInt,
+    L2: PeanoInt,
+{
+    fn eq(&self, rhs: &NList<U, L2>) -> bool {
+        let TypeCmp::Eq(te_len) = peano::cmp_peanos(L::NEW, L2::NEW) else {
+            return false;
+        };
+
+        let rhs = te_len.map(NListFn::NEW).in_ref().to_left(rhs);
+
+        self.each_ref().zip(rhs.each_ref()).all(|(l, r)| l == r)
+    }
+}
+
+impl<T, L> NList<T, L>
+where
+    L: PeanoInt,
+{
+    /// Total equality comparison between [`NList`]s of potentially different lengths.
+    pub fn total_eq<L2>(&self, rhs: &NList<T, L2>) -> bool
+    where
+        T: Eq,
+        L2: PeanoInt,
+    {
+        self == rhs
+    }
+}
+
+
+impl<T, L> Eq for NList<T, L>
+where
+    T: Eq,
+    L: PeanoInt,
+{
+}
+
+impl<T, U, L, L2> PartialOrd<NList<U, L2>> for NList<T, L>
+where
+    T: PartialOrd<U>,
+    L: PeanoInt,
+    L2: PeanoInt,
+{
+    fn partial_cmp(&self, rhs: &NList<U, L2>) -> Option<Ordering> {
+        match (NList::<T, L>::WIT, NList::<U, L2>::WIT) {
+            (NodeWit::Nil { .. }, NodeWit::Nil { .. }) => Some(Ordering::Equal),
+            (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Some(Ordering::Less),
+            (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Some(Ordering::Greater),
+            (
+                NodeWit::Cons { node_te: l_node_te, .. }, 
+                NodeWit::Cons { node_te: r_node_te, .. }
+            ) => {
+                let lhs = l_node_te.in_ref().to_right(&self.node);
+                let rhs = r_node_te.in_ref().to_right(&rhs.node);
+
+                match lhs.elem.partial_cmp(&rhs.elem) {
+                    Some(Ordering::Equal) => lhs.next.partial_cmp(&rhs.next),
+                    other => other
+                }
+            }
+        }
+    }
+}
+
+impl<T, L> NList<T, L>
+where
+    L: PeanoInt,
+{
+    /// Inherent version of [`Ord::cmp`], for comparing [`NList`]s of different lengths.
+    pub fn cmp<L2>(&self, rhs: &NList<T, L2>) -> Ordering 
+    where
+        T: Ord,
+        L2: PeanoInt,
+    {
+        match (NList::<T, L>::WIT, NList::<T, L2>::WIT) {
+            (NodeWit::Nil { .. }, NodeWit::Nil { .. }) => Ordering::Equal,
+            (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Ordering::Less,
+            (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Ordering::Greater,
+            (
+                NodeWit::Cons { node_te: l_node_te, .. }, 
+                NodeWit::Cons { node_te: r_node_te, .. }
+            ) => {
+                let lhs = l_node_te.in_ref().to_right(&self.node);
+                let rhs = r_node_te.in_ref().to_right(&rhs.node);
+
+                match lhs.elem.cmp(&rhs.elem) {
+                    Ordering::Equal => lhs.next.cmp(&rhs.next),
+                    other => other
+                }
+            }
+        }
+    }
+}
+
+
+/// For calling `cmp` on `NList`s of different lengths,
+/// there is an inherent `cmp` method.
+impl<T, L> Ord for NList<T, L>
+where
+    T: Ord,
+    L: PeanoInt,
+{
+    fn cmp(&self, rhs: &NList<T, L>) -> Ordering {
+        self.each_ref()
+            .zip(rhs.each_ref())
+            .fold(Ordering::Equal, |accum, (l, r)| match accum {
+                Ordering::Equal => l.cmp(r),
+                accum => accum,
+            })
+    }
+}
+
+////////////////////////////////////////////
 
 impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// Returns a reference to the first element of the list
@@ -208,7 +327,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
-    /// 
+    ///
     /// Returns `None` if the index is out of bounds.
     pub const fn get(&self, index: usize) -> Option<&T> {
         match Self::WIT {
@@ -221,13 +340,12 @@ impl<T, L: PeanoInt> NList<T, L> {
                 } else {
                     Some(elem)
                 }
-
             }
         }
     }
 
     /// Returns a mutable reference to the element at the `index` index.
-    /// 
+    ///
     /// Returns `None` if the index is out of bounds.
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         match Self::WIT {
@@ -240,7 +358,6 @@ impl<T, L: PeanoInt> NList<T, L> {
                 } else {
                     Some(elem)
                 }
-
             }
         }
     }
@@ -248,16 +365,16 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Finds the first element for which `predicate(&element)` returns true.
     pub fn find<F>(self, mut f: F) -> Option<T>
     where
-        F: FnMut(&T) -> bool
+        F: FnMut(&T) -> bool,
     {
         self._find_helper(move |_, x| f(&x).then_some(x))
     }
 
-    /// Iterates the list elements, 
+    /// Iterates the list elements,
     /// returning the first non-None return value of `mapper(element)`.
     pub fn find_map<F, R>(self, mut mapper: F) -> Option<R>
     where
-        F: FnMut(T) -> Option<R>
+        F: FnMut(T) -> Option<R>,
     {
         self._find_helper(move |_, x| mapper(x))
     }
@@ -265,19 +382,19 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Finds the first index for which `predicate` returns true.
     pub fn position<F, R>(self, mut predicate: F) -> Option<usize>
     where
-        F: FnMut(T) -> bool
+        F: FnMut(T) -> bool,
     {
         self._find_helper(move |i, x| predicate(x).then_some(i))
     }
 
     fn _find_helper<F, R>(self, f: F) -> Option<R>
     where
-        F: FnMut(usize, T) -> Option<R>
+        F: FnMut(usize, T) -> Option<R>,
     {
         fn inner<T, L, F, R>(list: NList<T, L>, index: usize, mut f: F) -> Option<R>
         where
             L: PeanoInt,
-            F: FnMut(usize, T) -> Option<R>
+            F: FnMut(usize, T) -> Option<R>,
         {
             match <NList<T, L>>::WIT {
                 NodeWit::Nil { .. } => None,
@@ -299,41 +416,41 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///////
     // r-prefixed methods
 
-    /// Iterates the list elements in reverse, 
+    /// Iterates the list elements in reverse,
     /// returns the first element for which `predicate(&element)` returns true.
     pub fn rfind<F>(self, mut f: F) -> Option<T>
     where
-        F: FnMut(&T) -> bool
+        F: FnMut(&T) -> bool,
     {
         self._rfind_helper(move |_, x| f(&x).then_some(x))
     }
 
-    /// Iterates the list elements in reverse, 
+    /// Iterates the list elements in reverse,
     /// returning the first non-None return value of `mapper(element)`.
     pub fn rfind_map<F, R>(self, mut mapper: F) -> Option<R>
     where
-        F: FnMut(T) -> Option<R>
+        F: FnMut(T) -> Option<R>,
     {
         self._rfind_helper(move |_, x| mapper(x))
     }
 
-    /// Iterates the list elements in reverse, 
+    /// Iterates the list elements in reverse,
     /// Finds the index of the first element for which `predicate` returns true.
     pub fn rposition<F, R>(self, mut predicate: F) -> Option<usize>
     where
-        F: FnMut(T) -> bool
+        F: FnMut(T) -> bool,
     {
         self._rfind_helper(move |i, x| predicate(x).then_some(i))
     }
 
     fn _rfind_helper<F, R>(self, mut f: F) -> Option<R>
     where
-        F: FnMut(usize, T) -> Option<R>
+        F: FnMut(usize, T) -> Option<R>,
     {
         fn inner<T, L, F, R>(list: NList<T, L>, index: usize, f: &mut F) -> Option<R>
         where
             L: PeanoInt,
-            F: FnMut(usize, T) -> Option<R>
+            F: FnMut(usize, T) -> Option<R>,
         {
             match <NList<T, L>>::WIT {
                 NodeWit::Nil { .. } => None,
@@ -499,9 +616,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Makes a bytewise copy of the list element by element.
-    pub const fn copy(&self) -> Self 
+    pub const fn copy(&self) -> Self
     where
-        T: Copy
+        T: Copy,
     {
         match Self::WIT {
             NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
@@ -570,6 +687,40 @@ impl<T, L: PeanoInt> NList<T, L> {
         }
 
         inner(self, 0, f)
+    }
+
+    /// Returns whether `predicate(elem)` returns true for any element.
+    pub fn any<F>(self, mut predicate: F) -> bool
+    where
+        F: FnMut(T) -> bool,
+    {
+        !self.all(|x| !predicate(x))
+    }
+
+    /// Returns whether `predicate(&elem)` returns true for all elements.
+    pub fn all<F>(self, predicate: F) -> bool
+    where
+        F: FnMut(T) -> bool,
+    {
+        fn inner<T, L, F>(list: NList<T, L>, mut func: F) -> bool
+        where
+            L: PeanoInt,
+            F: FnMut(T) -> bool,
+        {
+            match <NList<T, L>>::WIT {
+                NodeWit::Nil { .. } => true,
+                NodeWit::Cons { node_te, .. } => {
+                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+                    if func(elem) {
+                        inner(next, func)
+                    } else {
+                        false
+                    }
+                }
+            }
+        }
+
+        inner(self, predicate)
     }
 
     /// Folds over this list.

@@ -30,14 +30,12 @@ macro_rules! __nlist {
     };
 }
 
-
 ///////////////////////////////////
 
-
 /// Converts an integer constant to a [peano integer](crate::PeanoInt)
-/// 
+///
 /// This macro is just sugar for the [`FromUsize`] type alias
-/// 
+///
 /// [`FromUsize`]: crate::peano::FromUsize
 #[macro_export]
 macro_rules! peano {
