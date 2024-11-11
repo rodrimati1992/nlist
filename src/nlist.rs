@@ -12,14 +12,6 @@ use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
 
 ////////////////////////////////////////////////////////////////////////////////
 
-/// The type of the head node in `NList<T, L>`.
-///
-/// If `L` is:
-/// - `Zero`: this evaluates to `Nil<T, L>`
-/// - `PlusOne<_>`: this evaluates to `Cons<T, L>`
-///
-pub type Node<T, L> = <L as PeanoInt>::IfZero<Nil<T, L>, Cons<T, L>>;
-
 typewit::type_fn! {
     struct NListFn<T>;
 
@@ -44,6 +36,12 @@ typewit::type_fn! {
     impl<L1: PeanoInt, L2: PeanoInt> (L1, L2) => peano::Add<L1, L2>;
 }
 
+typewit::type_fn! {
+    struct MulPeanoFn;
+
+    impl<L1: PeanoInt, L2: PeanoInt> (L1, L2) => peano::Mul<L1, L2>;
+}
+
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Inline-allocated list of `T`
@@ -52,6 +50,9 @@ pub struct NList<T, L: PeanoInt> {
     /// The first node in the list
     pub node: Node<T, L>,
 }
+
+/// Alias for an `NList` of `NList`s
+pub type NList2D<T, LOuter, LInner> = NList<NList<T, LInner>, LOuter>;
 
 /// A node of an empty [`NList`]
 pub struct Nil<T, L>(TypeEq<L, Zero>, PhantomData<T>);
@@ -66,6 +67,16 @@ pub struct Cons<T, L: PeanoInt> {
     // assertion that `L == PlusOne<_>`, it doesn't matter if it's used.
     len_te: TypeEq<L, PlusOne<L::SubOneSat>>,
 }
+
+/// The type of the head node in `NList<T, L>`.
+///
+/// If `L` is:
+/// - `Zero`: this evaluates to `Nil<T, L>`
+/// - `PlusOne<_>`: this evaluates to `Cons<T, L>`
+///
+pub type Node<T, L> = <L as PeanoInt>::IfZero<Nil<T, L>, Cons<T, L>>;
+
+////////////////////////////////////////////////////////////////////////////////
 
 impl<T> NList<T, Zero> {
     /// Constructs an empty `NList`
@@ -189,7 +200,6 @@ where
     }
 }
 
-
 impl<T, L> Eq for NList<T, L>
 where
     T: Eq,
@@ -209,15 +219,19 @@ where
             (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Some(Ordering::Less),
             (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Some(Ordering::Greater),
             (
-                NodeWit::Cons { node_te: l_node_te, .. }, 
-                NodeWit::Cons { node_te: r_node_te, .. }
+                NodeWit::Cons {
+                    node_te: l_node_te, ..
+                },
+                NodeWit::Cons {
+                    node_te: r_node_te, ..
+                },
             ) => {
                 let lhs = l_node_te.in_ref().to_right(&self.node);
                 let rhs = r_node_te.in_ref().to_right(&rhs.node);
 
                 match lhs.elem.partial_cmp(&rhs.elem) {
                     Some(Ordering::Equal) => lhs.next.partial_cmp(&rhs.next),
-                    other => other
+                    other => other,
                 }
             }
         }
@@ -229,7 +243,7 @@ where
     L: PeanoInt,
 {
     /// Inherent version of [`Ord::cmp`], for comparing [`NList`]s of different lengths.
-    pub fn cmp<L2>(&self, rhs: &NList<T, L2>) -> Ordering 
+    pub fn cmp<L2>(&self, rhs: &NList<T, L2>) -> Ordering
     where
         T: Ord,
         L2: PeanoInt,
@@ -239,21 +253,24 @@ where
             (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Ordering::Less,
             (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Ordering::Greater,
             (
-                NodeWit::Cons { node_te: l_node_te, .. }, 
-                NodeWit::Cons { node_te: r_node_te, .. }
+                NodeWit::Cons {
+                    node_te: l_node_te, ..
+                },
+                NodeWit::Cons {
+                    node_te: r_node_te, ..
+                },
             ) => {
                 let lhs = l_node_te.in_ref().to_right(&self.node);
                 let rhs = r_node_te.in_ref().to_right(&rhs.node);
 
                 match lhs.elem.cmp(&rhs.elem) {
                     Ordering::Equal => lhs.next.cmp(&rhs.next),
-                    other => other
+                    other => other,
                 }
             }
         }
     }
 }
-
 
 /// For calling `cmp` on `NList`s of different lengths,
 /// there is an inherent `cmp` method.
@@ -479,6 +496,8 @@ impl<T, L: PeanoInt> NList<T, L> {
         inner(self, 0, &mut f)
     }
 }
+
+mod flatten;
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Consumes and returns a reversed version of this list
