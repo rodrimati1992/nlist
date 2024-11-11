@@ -205,6 +205,153 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 }
 
 impl<T, L: PeanoInt> NList<T, L> {
+    /// Returns a reference to the element at the `index` index.
+    /// 
+    /// Returns `None` if the index is out of bounds.
+    pub const fn get(&self, index: usize) -> Option<&T> {
+        match Self::WIT {
+            NodeWit::Nil { .. } => None,
+            NodeWit::Cons { node_te, .. } => {
+                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
+
+                if let Some(sub1) = index.checked_sub(1) {
+                    next.get(sub1)
+                } else {
+                    Some(elem)
+                }
+
+            }
+        }
+    }
+
+    /// Returns a mutable reference to the element at the `index` index.
+    /// 
+    /// Returns `None` if the index is out of bounds.
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        match Self::WIT {
+            NodeWit::Nil { .. } => None,
+            NodeWit::Cons { node_te, .. } => {
+                let Cons { elem, next, .. } = node_te.in_mut().to_right(&mut self.node);
+
+                if let Some(sub1) = index.checked_sub(1) {
+                    next.get_mut(sub1)
+                } else {
+                    Some(elem)
+                }
+
+            }
+        }
+    }
+
+    /// Finds the first element for which `predicate(&element)` returns true.
+    pub fn find<F>(self, mut f: F) -> Option<T>
+    where
+        F: FnMut(&T) -> bool
+    {
+        self._find_helper(move |_, x| f(&x).then_some(x))
+    }
+
+    /// Iterates the list elements, 
+    /// returning the first non-None return value of `mapper(element)`.
+    pub fn find_map<F, R>(self, mut mapper: F) -> Option<R>
+    where
+        F: FnMut(T) -> Option<R>
+    {
+        self._find_helper(move |_, x| mapper(x))
+    }
+
+    /// Finds the first index for which `predicate` returns true.
+    pub fn position<F, R>(self, mut predicate: F) -> Option<usize>
+    where
+        F: FnMut(T) -> bool
+    {
+        self._find_helper(move |i, x| predicate(x).then_some(i))
+    }
+
+    fn _find_helper<F, R>(self, f: F) -> Option<R>
+    where
+        F: FnMut(usize, T) -> Option<R>
+    {
+        fn inner<T, L, F, R>(list: NList<T, L>, index: usize, mut f: F) -> Option<R>
+        where
+            L: PeanoInt,
+            F: FnMut(usize, T) -> Option<R>
+        {
+            match <NList<T, L>>::WIT {
+                NodeWit::Nil { .. } => None,
+                NodeWit::Cons { node_te, .. } => {
+                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+
+                    if let x @ Some(_) = f(index, elem) {
+                        x
+                    } else {
+                        inner(next, index + 1, f)
+                    }
+                }
+            }
+        }
+
+        inner(self, 0, f)
+    }
+
+    ///////
+    // r-prefixed methods
+
+    /// Iterates the list elements in reverse, 
+    /// returns the first element for which `predicate(&element)` returns true.
+    pub fn rfind<F>(self, mut f: F) -> Option<T>
+    where
+        F: FnMut(&T) -> bool
+    {
+        self._rfind_helper(move |_, x| f(&x).then_some(x))
+    }
+
+    /// Iterates the list elements in reverse, 
+    /// returning the first non-None return value of `mapper(element)`.
+    pub fn rfind_map<F, R>(self, mut mapper: F) -> Option<R>
+    where
+        F: FnMut(T) -> Option<R>
+    {
+        self._rfind_helper(move |_, x| mapper(x))
+    }
+
+    /// Iterates the list elements in reverse, 
+    /// Finds the index of the first element for which `predicate` returns true.
+    pub fn rposition<F, R>(self, mut predicate: F) -> Option<usize>
+    where
+        F: FnMut(T) -> bool
+    {
+        self._rfind_helper(move |i, x| predicate(x).then_some(i))
+    }
+
+    fn _rfind_helper<F, R>(self, mut f: F) -> Option<R>
+    where
+        F: FnMut(usize, T) -> Option<R>
+    {
+        fn inner<T, L, F, R>(list: NList<T, L>, index: usize, f: &mut F) -> Option<R>
+        where
+            L: PeanoInt,
+            F: FnMut(usize, T) -> Option<R>
+        {
+            match <NList<T, L>>::WIT {
+                NodeWit::Nil { .. } => None,
+                NodeWit::Cons { node_te, .. } => {
+                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+
+                    if let x @ Some(_) = inner(next, index + 1, f) {
+                        x
+                    } else {
+                        f(index, elem)
+                    }
+                }
+            }
+        }
+
+        inner(self, 0, &mut f)
+    }
+}
+
+impl<T, L: PeanoInt> NList<T, L> {
     /// Consumes and returns a reversed version of this list
     pub fn reverse(self) -> NList<T, L> {
         enum ReverseState<T, LI, LA, LR>

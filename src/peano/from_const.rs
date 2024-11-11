@@ -1,6 +1,5 @@
 use typewit::const_marker::Usize;
 
-use crate::peano::Mul;
 use crate::peano::{PeanoInt, Zero};
 use crate::peano::PlusOne as Plus1;
 
