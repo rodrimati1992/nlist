@@ -326,6 +326,16 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 }
 
 impl<T, L: PeanoInt> NList<T, L> {
+    /// Returns the length of the list
+    pub const fn len(&self) -> usize {
+        L::USIZE
+    }
+
+    /// Returns whether the list is empty
+    pub const fn is_empty(&self) -> bool {
+        L::USIZE == 0
+    }
+
     /// Returns a reference to the element at the `index` index.
     ///
     /// Returns `None` if the index is out of bounds.
