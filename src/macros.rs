@@ -19,15 +19,6 @@ macro_rules! nlist {
     }
 }
 
-
-/// Converts an integer constant to a [peano integer](crate::PeanoInt)
-#[macro_export]
-macro_rules! peano {
-    ($expr:expr) => {
-        $crate::peano::FromUsize<$expr>
-    }
-}
-
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __nlist {
@@ -37,4 +28,20 @@ macro_rules! __nlist {
     () => {
         $crate::NList::nil()
     };
+}
+
+
+///////////////////////////////////
+
+
+/// Converts an integer constant to a [peano integer](crate::PeanoInt)
+/// 
+/// This macro is just sugar for the [`FromUsize`] type alias
+/// 
+/// [`FromUsize`]: crate::peano::FromUsize
+#[macro_export]
+macro_rules! peano {
+    ($expr:expr) => {
+        $crate::peano::FromUsize<$expr>
+    }
 }
