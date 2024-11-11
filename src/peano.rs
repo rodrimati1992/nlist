@@ -2,8 +2,6 @@ use core::marker::PhantomData;
 
 use typewit::{TypeCmp, TypeEq, TypeNe};
 
-
-
 /// Type-level encoding of `0`
 #[derive(Copy, Clone)]
 pub struct Zero;
@@ -18,7 +16,6 @@ impl<T> Clone for PlusOne<T> {
         *self
     }
 }
-
 
 /// Type alias form of [`PeanoInt::SubOneSat`]
 pub type SubOneSat<Lhs> = <Lhs as PeanoInt>::SubOneSat;
@@ -37,7 +34,6 @@ pub type Min<Lhs, Rhs> = <Lhs as PeanoInt>::Min<Rhs>;
 
 /// Type alias form of [`PeanoInt::Max`]
 pub type Max<Lhs, Rhs> = <Lhs as PeanoInt>::Max<Rhs>;
-
 
 /// Trait for peano numbers, a type-level encoding of unsigned integers.
 pub trait PeanoInt: Copy + 'static {
@@ -95,12 +91,12 @@ impl PeanoInt for Zero {
     const PEANO_WIT: PeanoWit<Self> = PeanoWit::Zero(TypeEq::NEW);
 }
 
-impl<T> PeanoInt for PlusOne<T> 
+impl<T> PeanoInt for PlusOne<T>
 where
-    T: PeanoInt
+    T: PeanoInt,
 {
     type SubOneSat = T;
-    
+
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
 
@@ -110,18 +106,12 @@ where
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
 
-    type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<
-        Zero, 
-        PlusOne<T::Min<Rhs::SubOneSat>>
-    >;
+    type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
 
-    type Max<Rhs: PeanoInt> = Rhs::IfZeroPI<
-        Self, 
-        PlusOne<T::Max<Rhs::SubOneSat>>
-    >;
+    type Max<Rhs: PeanoInt> = Rhs::IfZeroPI<Self, PlusOne<T::Max<Rhs::SubOneSat>>>;
 
     const NEW: Self = PlusOne(PhantomData);
-    
+
     const USIZE: usize = 1 + T::USIZE;
 
     const PEANO_WIT: PeanoWit<Self> = PeanoWit::PlusOne(TypeEq::NEW);
@@ -139,7 +129,7 @@ mod peano_cmp_wit {
     use super::*;
 
     pub struct PairOfPeanos<L: PeanoInt, R: PeanoInt>(PhantomData<(fn() -> L, fn() -> R)>);
-    
+
     pub trait PeanoCmpWit {
         type L: PeanoInt;
         type R: PeanoInt;
@@ -153,40 +143,28 @@ mod peano_cmp_wit {
 
         const CMP_WIT: TypeCmp<Zero, R> = match R::PEANO_WIT {
             PeanoWit::Zero(r_te) => TypeCmp::Eq(r_te.flip()),
-            PeanoWit::PlusOne(r_te) => TypeCmp::Ne(
-                zero_one_inequality()
-                    .join_right(r_te.flip())
-            ),
+            PeanoWit::PlusOne(r_te) => TypeCmp::Ne(zero_one_inequality().join_right(r_te.flip())),
         };
     }
-
 
     impl<L: PeanoInt, R: PeanoInt> PeanoCmpWit for PairOfPeanos<PlusOne<L>, R> {
         type L = PlusOne<L>;
         type R = R;
 
         const CMP_WIT: TypeCmp<PlusOne<L>, R> = match R::PEANO_WIT {
-            PeanoWit::Zero(r_te) => TypeCmp::Ne(
-                zero_one_inequality()
-                    .flip()
-                    .join_right(r_te.flip())
-            ),
-            PeanoWit::PlusOne(r_te) => {
-                <L as PeanoInt>::__PairOfPeanos::<R::SubOneSat>::CMP_WIT
-                    .map(PlusOneFn)
-                    .join_right(r_te.flip())
+            PeanoWit::Zero(r_te) => {
+                TypeCmp::Ne(zero_one_inequality().flip().join_right(r_te.flip()))
             }
+            PeanoWit::PlusOne(r_te) => <L as PeanoInt>::__PairOfPeanos::<R::SubOneSat>::CMP_WIT
+                .map(PlusOneFn)
+                .join_right(r_te.flip()),
         };
     }
 }
 use peano_cmp_wit::{PairOfPeanos, PeanoCmpWit};
 
-
-
-
-
 /// Returns a [`TypeCmp<L, R>`], which is a proof of whether `L == R` or `L != R`.
-pub const fn cmp_peanos<L, R>(_: L, _: R) -> TypeCmp<L, R> 
+pub const fn cmp_peanos<L, R>(_: L, _: R) -> TypeCmp<L, R>
 where
     L: PeanoInt,
     R: PeanoInt,
@@ -201,7 +179,7 @@ const fn zero_one_inequality<L: PeanoInt>() -> TypeNe<Zero, PlusOne<L>> {
 /// Diverges when given a proof of `PlusOne<L> == Zero`
 /// (which is a contradiction, because they're different types).
 pub const fn contradiction<L>(length_te: TypeEq<PlusOne<L>, Zero>) -> ! {
-    typewit::type_fn!{
+    typewit::type_fn! {
         struct ZeroEqualsOneFn<T, U>;
 
         impl<L> PlusOne<L> => T;
@@ -211,9 +189,8 @@ pub const fn contradiction<L>(length_te: TypeEq<PlusOne<L>, Zero>) -> ! {
     length_te.map(ZeroEqualsOneFn::NEW).to_left(())
 }
 
-typewit::inj_type_fn!{
+typewit::inj_type_fn! {
     struct PlusOneFn;
 
     impl<L: PeanoInt> L => PlusOne<L>;
 }
-

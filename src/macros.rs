@@ -18,7 +18,6 @@ macro_rules! nlist {
     }
 }
 
-
 #[macro_export]
 #[doc(hidden)]
 macro_rules! __nlist {
@@ -29,5 +28,3 @@ macro_rules! __nlist {
         $crate::NList::nil()
     };
 }
-
-

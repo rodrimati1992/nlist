@@ -1,11 +1,10 @@
 //! Provides an [inline-allocated list] which statically tracks its length.
-//! 
+//!
 //! [inline-allocated list]: crate::NList
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(unused_results)]
-
 #![no_std]
 
 #[cfg(feature = "alloc")]
@@ -19,7 +18,6 @@ pub mod peano;
 mod nlist;
 
 pub use crate::{
-    peano::{PeanoInt, PlusOne, Zero},
     nlist::*,
+    peano::{PeanoInt, PlusOne, Zero},
 };
-
