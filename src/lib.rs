@@ -2,10 +2,6 @@
 //!
 //! # Example
 //!
-//! This example demonstrates this crate's intent to make operating on an
-//! [`NList`] with a generic length not require tons of bounds,
-//! you'll usually only need to bound by [`PeanoInt`].
-//!
 //! ```rust
 //! use nlist::{nlist, peano};
 //! use nlist::{NList, PeanoInt};

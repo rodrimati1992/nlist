@@ -127,6 +127,8 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 }
 
+/// `Copy` can't be implemented for NList,
+/// you can however use the [`copy`](NList::copy) method.
 impl<T, L> Clone for NList<T, L>
 where
     T: Clone,
@@ -494,6 +496,21 @@ impl<T, L: PeanoInt> NList<T, L> {
         let mut out = Vec::new();
         to_vec_inner(&mut out, self);
         out
+    }
+
+    /// Makes a bytewise copy of the list element by element.
+    pub const fn copy(&self) -> Self 
+    where
+        T: Copy
+    {
+        match Self::WIT {
+            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+
+            NodeWit::Cons { node_te, len_te } => {
+                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
+                NList::cons_sub(*elem, next.copy(), len_te)
+            }
+        }
     }
 
     /// Gets a list of references to each element of this list.
