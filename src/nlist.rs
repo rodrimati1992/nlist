@@ -136,6 +136,18 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Constructs a list by repeating `elem`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use nlist::{NList, nlist, peano};
+    ///
+    /// let nlist: NList<_, peano!(4)> = NList::repeat_copy(3);
+    ///
+    /// assert_eq!(nlist, nlist![3, 3, 3, 3]);
+    /// assert_eq!(nlist, nlist![3; 4]);
+    ///
+    /// ```
     pub const fn repeat_copy(elem: T) -> Self
     where
         T: Copy,
@@ -162,7 +174,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```rust
     /// use nlist::{NList, nlist};
     ///
-    /// let nlist: NList<u32, _> = NList::from_array([3, 5, 8, 13, 21]);
+    /// let nlist = NList::from_array([3, 5, 8, 13, 21]);
     ///
     /// assert_eq!(nlist, nlist![3, 5, 8, 13, 21]);
     ///
