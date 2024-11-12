@@ -62,7 +62,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     pub const fn index<I>(&self) -> &T
     where
         I: PeanoInt,
-        L: PeanoInt<Max<PlusOne<I>> = L>,
+        PlusOne<I>: PeanoInt<Max<L> = L>,
     {
         const fn inner<T, L, At>(list: &NList<T, L>, at: At) -> &T
         where
