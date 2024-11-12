@@ -150,7 +150,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Alternate constructor for [`NList::nil`],
     /// for constructing an empty `NList` in a generic context.
     pub const fn nil_sub(len_te: TypeEq<L, Zero>) -> Self {
-        NList::nil().coerce_length(len_te.flip())
+        NList::nil().coerce_len(len_te.flip())
     }
 
     /// Alternate constructor for [`NList::cons`],
@@ -161,7 +161,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         next: NList<T, L2>,
         len_te: TypeEq<L, PlusOne<L2>>,
     ) -> Self {
-        NList::cons(val, next).coerce_length(len_te.flip())
+        NList::cons(val, next).coerce_len(len_te.flip())
     }
 }
 
@@ -368,6 +368,8 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     }
 }
 
+mod indexing;
+
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns the length of the list
     pub const fn len(&self) -> usize {
@@ -377,42 +379,6 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Returns whether the list is empty
     pub const fn is_empty(&self) -> bool {
         L::USIZE == 0
-    }
-
-    /// Returns a reference to the element at the `index` index.
-    ///
-    /// Returns `None` if the index is out of bounds.
-    pub const fn get(&self, index: usize) -> Option<&T> {
-        match Self::WIT {
-            NodeWit::Nil { .. } => None,
-            NodeWit::Cons { node_te, .. } => {
-                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
-
-                if let Some(sub1) = index.checked_sub(1) {
-                    next.get(sub1)
-                } else {
-                    Some(elem)
-                }
-            }
-        }
-    }
-
-    /// Returns a mutable reference to the element at the `index` index.
-    ///
-    /// Returns `None` if the index is out of bounds.
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        match Self::WIT {
-            NodeWit::Nil { .. } => None,
-            NodeWit::Cons { node_te, .. } => {
-                let Cons { elem, next, .. } = node_te.in_mut().to_right(&mut self.node);
-
-                if let Some(sub1) = index.checked_sub(1) {
-                    next.get_mut(sub1)
-                } else {
-                    Some(elem)
-                }
-            }
-        }
     }
 
     /// Finds the first element for which `predicate(&element)` returns true.
@@ -598,7 +564,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         match Self::WIT {
             NodeWit::Nil { .. } => self,
             NodeWit::Cons { len_te, .. } => {
-                let (elem, tail) = self.coerce_length(len_te).into_split_head();
+                let (elem, tail) = self.coerce_len(len_te).into_split_head();
 
                 inner(tail, NList::cons(elem, NList::nil()))
             }
@@ -833,8 +799,21 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Given a proof that `L == L2`, coerces `NList<T, L>` to `NList<T, L2>`
-    pub const fn coerce_length<L2: PeanoInt>(self, len_te: TypeEq<L, L2>) -> NList<T, L2> {
+    pub const fn coerce_len<L2: PeanoInt>(self, len_te: TypeEq<L, L2>) -> NList<T, L2> {
         len_te.map(NListFn::NEW).to_right(self)
+    }
+
+    /// Given a proof that `L == L2`, coerces `&NList<T, L>` to `&NList<T, L2>`
+    pub const fn as_coerce_len<L2: PeanoInt>(&self, len_te: TypeEq<L, L2>) -> &NList<T, L2> {
+        len_te.map(NListFn::NEW).in_ref().to_right(self)
+    }
+
+    /// Given a proof that `L == L2`, coerces `&mut NList<T, L>` to `&mut NList<T, L2>`
+    pub fn as_mut_coerce_len<L2>(&mut self, len_te: TypeEq<L, L2>) -> &mut NList<T, L2>
+    where
+        L2: PeanoInt,
+    {
+        len_te.map(NListFn::NEW).in_mut().to_right(self)
     }
 }
 

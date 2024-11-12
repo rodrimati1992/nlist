@@ -239,7 +239,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
                             let (newsub, tail) = outer_te.to_right(outer).into_split_head();
 
-                            let newsub = newsub.coerce_length(tail_te.flip());
+                            let newsub = newsub.coerce_len(tail_te.flip());
 
                             zero_wit.map(cargfn).to_left((newsub, tail, output))
                         }
@@ -247,7 +247,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                             let IteratingInner { output_te, .. } =
                                 one_wit.map(swfn).to_right(state_wit);
 
-                            let (elem, tail) = sub.coerce_length(one_wit).into_split_head();
+                            let (elem, tail) = sub.coerce_len(one_wit).into_split_head();
 
                             one_wit.map(cargfn).to_left((
                                 tail,

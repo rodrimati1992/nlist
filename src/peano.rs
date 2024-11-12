@@ -13,12 +13,15 @@ pub use self::from_const::{FromPeano, FromUsize, IntoPeano, IntoUsize};
 #[derive(Copy, Clone)]
 pub struct Zero;
 
-/// Type-level encoding of `+1`
-pub struct PlusOne<T>(PhantomData<T>);
+/// Type-level encoding of `T + 1`
+pub struct PlusOne<T> {
+    /// `Self - 1`
+    pub sub_one: T,
+}
 
-impl<T> Copy for PlusOne<T> {}
+impl<T: Copy> Copy for PlusOne<T> {}
 
-impl<T> Clone for PlusOne<T> {
+impl<T: Copy> Clone for PlusOne<T> {
     fn clone(&self) -> Self {
         *self
     }
@@ -137,7 +140,7 @@ where
 
     type Max<Rhs: PeanoInt> = Rhs::IfZeroPI<Self, PlusOne<T::Max<Rhs::SubOneSat>>>;
 
-    const NEW: Self = PlusOne(PhantomData);
+    const NEW: Self = PlusOne { sub_one: T::NEW };
 
     const USIZE: usize = 1 + T::USIZE;
 
