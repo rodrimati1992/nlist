@@ -3,7 +3,7 @@ use core::marker::PhantomData;
 use const_panic::concat_panic;
 use typewit::{type_fn, CallFn, TypeCmp, TypeEq};
 
-use super::{NList, NList2D, NListFn, NodeWit};
+use super::{NList, NList2D, NListFn};
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
 
 impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
@@ -26,21 +26,9 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
     /// );
     /// ```
     pub fn flatten(self) -> NList<T, peano::Mul<L, L2>> {
-        type_fn! {
-            struct StateWitFn<T, LOuter, LInner, LAcc, LRet>;
-
-            impl<LSub> LSub => LSub::IfZero<
-                IteratingOuter<T, LSub, LOuter, LInner, LAcc, LRet>,
-                IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>,
-            >
-            where
-                LSub: PeanoInt,
-                LOuter: PeanoInt,
-                LInner: PeanoInt,
-                LAcc: PeanoInt,
-                LRet: PeanoInt,
-        }
-
+        // The current state of iteration over an NList,
+        // as determined by the type arguments.
+        //
         // LSub: the length of the inner List<T> that we're grabbing the elements from
         // LOuter: from `NList2D<T, LOuter, LInner>`, the length of the list of lists
         // LInner: from `NList2D<T, LOuter, LInner>`, the length of the "next" inner lists
@@ -56,21 +44,34 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
         {
             Iterating {
                 lsub_wit: PeanoWit<LSub>,
-                state_wit: LSub::IfZero<
-                    IteratingOuter<T, LSub, LOuter, LInner, LAcc, LRet>,
-                    IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>,
-                >,
+                state_wit: CallFn<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>, LSub>,
             },
             Finished {
                 output_te: TypeEq<NList<T, LAcc>, NList<T, LRet>>,
             },
         }
 
+        type_fn! {
+            struct IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>;
+
+            impl<LSub> LSub => LSub::IfZero<
+                IteratingOuter<T, LSub, LOuter, LInner, LAcc, LRet>,
+                IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>,
+            >
+            where
+                LSub: PeanoInt,
+                LOuter: PeanoInt,
+                LInner: PeanoInt,
+                LAcc: PeanoInt,
+                LRet: PeanoInt,
+        }
+
         typewit::type_fn! {
+            /// Computes the `LSub` type argument for a recursive call to `inner`.
             struct SubTailLenFn<LInner>;
 
             impl<LSub, LOuter> (LSub, LOuter) => LSub::IfZeroPI<
-                LOuter::IfZeroPI<Zero, LInner>, 
+                LOuter::IfZeroPI<Zero, LInner>,
                 SubOneSat<LSub>,
             >
             where
@@ -80,6 +81,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
         }
 
         typewit::type_fn! {
+            // Computes the types of the arguments for the recursive `inner` call
             struct CallArgsFn<T, LOuter, LInner, LAcc, LRet>;
 
             impl<LSub> LSub => (
@@ -95,6 +97,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                 LRet: PeanoInt,
         }
 
+        // Witnesses for iteration over an `NList<T>`
         struct IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>
         where
             LSub: PeanoInt,
@@ -103,6 +106,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             LAcc: PeanoInt,
             LRet: PeanoInt,
         {
+            // Witness that the returned NList is at most `LRet` elements long
             output_te: TypeEq<
                 NList<T, PlusOne<LAcc>>,
                 // computes the minimum of `PlusOne<LAcc>` and `LRet`
@@ -113,6 +117,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             _phantom: PhantomData<fn() -> (T, LSub, LOuter, LInner, LAcc, LRet)>,
         }
 
+        // Witnesses for iteration over an `NList2D<T, LOuter, LInner>`
         struct IteratingOuter<T, LSub, LOuter, LInner, LAcc, LRet>
         where
             LSub: PeanoInt,
@@ -121,8 +126,16 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             LAcc: PeanoInt,
             LRet: PeanoInt,
         {
+            // Witness that the `NList2D` has at least one more sublist:
+            // ```
+            // NList2D<T, LOuter                    , LInner> ==
+            // NList2D<T, PlusOne<LOuter::SubOneSat>, LInner>
+            // ```
             outer_te:
                 TypeEq<NList2D<T, LOuter, LInner>, NList2D<T, PlusOne<LOuter::SubOneSat>, LInner>>,
+            // Witness that the next sublist is `LInner` long
+            //
+            // `CallFn<SubTailLenFn<LInner>, (LSub, LOuter)> == LInner`
             tail_te: TypeEq<CallFn<SubTailLenFn<LInner>, (LSub, LOuter)>, LInner>,
             _phantom: PhantomData<fn() -> (T, LSub, LOuter, LInner, LAcc, LRet)>,
         }
@@ -151,7 +164,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                     FlattenState::Iterating {
                         lsub_wit,
                         state_wit: sub_te
-                            .project::<StateWitFn<T, LOuter, LInner, LAcc, LRet>>()
+                            .project::<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>>()
                             .to_left(IteratingInner {
                                 output_te: output_te.map(NListFn::NEW),
                                 _phantom: PhantomData,
@@ -165,7 +178,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                 ) => FlattenState::Iterating {
                     lsub_wit,
                     state_wit: sub_te
-                        .project::<StateWitFn<T, LOuter, LInner, LAcc, LRet>>()
+                        .project::<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>>()
                         .to_left(IteratingOuter {
                             outer_te: outer_te.map(NListFn::NEW),
                             tail_te: TypeEq::new::<Zero>()
@@ -212,7 +225,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                     lsub_wit,
                     state_wit,
                 } => {
-                    let swfn = StateWitFn::<T, LOuter, LInner, LAcc, LRet>::NEW;
+                    let swfn = IteratingWhatFn::<T, LOuter, LInner, LAcc, LRet>::NEW;
                     let cargfn = CallArgsFn::<T, LOuter, LInner, LAcc, LRet>::NEW;
 
                     let (next_sub, next_outer, next_output): CallFn<
@@ -220,8 +233,9 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                         LSub,
                     > = match lsub_wit {
                         PeanoWit::Zero(zero_wit) => {
-                            let IteratingOuter { outer_te, tail_te, .. } =
-                                zero_wit.map(swfn).to_right(state_wit);
+                            let IteratingOuter {
+                                outer_te, tail_te, ..
+                            } = zero_wit.map(swfn).to_right(state_wit);
 
                             let (newsub, tail) = outer_te.to_right(outer).into_split_head();
 
@@ -230,7 +244,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                             zero_wit.map(cargfn).to_left((newsub, tail, output))
                         }
                         PeanoWit::PlusOne(one_wit) => {
-                            let IteratingInner {output_te, ..} = 
+                            let IteratingInner { output_te, .. } =
                                 one_wit.map(swfn).to_right(state_wit);
 
                             let (elem, tail) = sub.coerce_length(one_wit).into_split_head();
