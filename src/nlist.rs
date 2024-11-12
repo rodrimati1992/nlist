@@ -160,6 +160,16 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Constructs a list by calling `f` with the index of each element.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use nlist::{NList, nlist, peano};
+    ///
+    /// let list: NList<_, peano!(4)> = NList::from_fn(|i| i.pow(2));
+    ///
+    /// assert_eq!(list, nlist![0, 1, 4, 9]);
+    /// ```
     pub fn from_fn<F>(f: F) -> Self
     where
         F: FnMut(usize) -> T,
@@ -193,14 +203,14 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Alternate constructor for [`NList::nil`],
     /// for constructing an empty `NList` in a generic context.
-    pub const fn nil_sub(len_te: TypeEq<L, Zero>) -> Self {
+    const fn nil_sub(len_te: TypeEq<L, Zero>) -> Self {
         NList::nil().coerce_len(len_te.flip())
     }
 
     /// Alternate constructor for [`NList::cons`],
     /// for constructing a `NList` out of the tail of another `NList`
     /// in a generic context.
-    pub const fn cons_sub<L2: PeanoInt>(
+    const fn cons_sub<L2: PeanoInt>(
         val: T,
         next: NList<T, L2>,
         len_te: TypeEq<L, PlusOne<L2>>,
@@ -261,6 +271,18 @@ where
     L: PeanoInt,
 {
     /// Total equality comparison between [`NList`]s of potentially different lengths.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    /// 
+    /// assert!(nlist![3, 5].total_eq(&nlist![3, 5]));
+    /// 
+    /// assert!(!nlist![3, 5].total_eq(&nlist![3]));
+    /// assert!(!nlist![3, 5].total_eq(&nlist![3, 0]));
+    /// assert!(!nlist![3, 5].total_eq(&nlist![3, 5, 8]));
+    /// ```
     pub fn total_eq<L2>(&self, rhs: &NList<T, L2>) -> bool
     where
         T: Eq,
@@ -313,7 +335,37 @@ where
     L: PeanoInt,
 {
     /// Inherent version of [`Ord::cmp`], for comparing [`NList`]s of different lengths.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    /// use core::cmp::Ordering;
+    /// 
+    /// // shorter-argument
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![1]), Ordering::Greater);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3]), Ordering::Greater);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![8]), Ordering::Less);
+    /// 
+    /// // same-length argument
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 1]), Ordering::Greater);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 5]), Ordering::Equal);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 8]), Ordering::Less);
+    ///
+    /// // longer-argument
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 4, 0]), Ordering::Greater);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 5, 0]), Ordering::Less);
+    /// assert_eq!(nlist![3, 5].cmp(&nlist![3, 6, 0]), Ordering::Less);
+    /// ```
     pub fn cmp<L2>(&self, rhs: &NList<T, L2>) -> Ordering
+    where
+        T: Ord,
+        L2: PeanoInt,
+    {
+        self.inherent_cmp(rhs)
+    }
+
+    fn inherent_cmp<L2>(&self, rhs: &NList<T, L2>) -> Ordering
     where
         T: Ord,
         L2: PeanoInt,
@@ -334,7 +386,7 @@ where
                 let rhs = r_node_te.in_ref().to_right(&rhs.node);
 
                 match lhs.elem.cmp(&rhs.elem) {
-                    Ordering::Equal => lhs.next.cmp(&rhs.next),
+                    Ordering::Equal => lhs.next.inherent_cmp(&rhs.next),
                     other => other,
                 }
             }
@@ -350,12 +402,7 @@ where
     L: PeanoInt,
 {
     fn cmp(&self, rhs: &NList<T, L>) -> Ordering {
-        self.each_ref()
-            .zip(rhs.each_ref())
-            .fold(Ordering::Equal, |accum, (l, r)| match accum {
-                Ordering::Equal => l.cmp(r),
-                accum => accum,
-            })
+        self.inherent_cmp(rhs)
     }
 }
 
@@ -363,36 +410,148 @@ where
 
 impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// Returns a reference to the first element of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.head(), &3);
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.head(), &5);
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.head(), &8);
+    ///
+    /// ```
     pub const fn head(&self) -> &T {
         &self.node.elem
     }
 
     /// Returns a mutable reference ot the first element of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let mut list_a = nlist![3];
+    /// assert_eq!(list_a.head_mut(), &mut 3);
+    ///
+    /// let mut list_b = nlist![5, 3];
+    /// assert_eq!(list_b.head_mut(), &mut 5);
+    ///
+    /// let mut list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.head_mut(), &mut 8);
+    ///
+    /// ```
     pub fn head_mut(&mut self) -> &mut T {
         &mut self.node.elem
     }
 
     /// Returns the first element of the list by value
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.into_head(), 3);
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.into_head(), 5);
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.into_head(), 8);
+    ///
+    /// ```
     pub fn into_head(self) -> T {
         self.node.elem
     }
 
     /// Returns a reference to the remainder of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.tail(), &nlist![]);
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.tail(), &nlist![3]);
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.tail(), &nlist![5, 3]);
+    ///
+    /// ```
     pub const fn tail(&self) -> &NList<T, L> {
         &self.node.next
     }
 
     /// Returns a mutable reference to the remainder of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let mut list_a = nlist![3];
+    /// assert_eq!(list_a.tail_mut(), &mut nlist![]);
+    ///
+    /// let mut list_b = nlist![5, 3];
+    /// assert_eq!(list_b.tail_mut(), &mut nlist![3]);
+    ///
+    /// let mut list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.tail_mut(), &mut nlist![5, 3]);
+    ///
+    /// ```
     pub fn tail_mut(&mut self) -> &mut NList<T, L> {
         &mut self.node.next
     }
 
     /// Returns the remainder of the list by value
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.into_tail(), nlist![]);
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.into_tail(), nlist![3]);
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.into_tail(), nlist![5, 3]);
+    ///
+    /// ```
     pub fn into_tail(self) -> NList<T, L> {
         self.node.next
     }
 
     /// Returns a pair of references to the first element and the remainder of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.split_head(), (&3, &nlist![]));
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.split_head(), (&5, &nlist![3]));
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.split_head(), (&8, &nlist![5, 3]));
+    ///
+    /// ```
     pub const fn split_head(&self) -> (&T, &NList<T, L>) {
         let Cons { elem, next, .. } = &self.node;
 
@@ -400,6 +559,22 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     }
 
     /// Returns a pair of mutable references to the first element and the remainder of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let mut list_a = nlist![3];
+    /// assert_eq!(list_a.split_head_mut(), (&mut 3, &mut nlist![]));
+    ///
+    /// let mut list_b = nlist![5, 3];
+    /// assert_eq!(list_b.split_head_mut(), (&mut 5, &mut nlist![3]));
+    ///
+    /// let mut list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.split_head_mut(), (&mut 8, &mut nlist![5, 3]));
+    ///
+    /// ```
     pub fn split_head_mut(&mut self) -> (&mut T, &mut NList<T, L>) {
         let Cons { elem, next, .. } = &mut self.node;
 
@@ -407,6 +582,22 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     }
 
     /// Returns a by-value pair of first element and the remainder of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::nlist;
+    ///
+    /// let list_a = nlist![3];
+    /// assert_eq!(list_a.into_split_head(), (3, nlist![]));
+    ///
+    /// let list_b = nlist![5, 3];
+    /// assert_eq!(list_b.into_split_head(), (5, nlist![3]));
+    ///
+    /// let list_c = nlist![8, 5, 3];
+    /// assert_eq!(list_c.into_split_head(), (8, nlist![5, 3]));
+    ///
+    /// ```
     pub fn into_split_head(self) -> (T, NList<T, L>) {
         (self.node.elem, self.node.next)
     }
@@ -416,11 +607,37 @@ mod indexing;
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns the length of the list
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    ///
+    /// assert_eq!(NList::nil::<u32>().len(), 0);
+    ///
+    /// assert_eq!(nlist![5].len(), 1);
+    ///
+    /// assert_eq!(nlist![8, 5].len(), 2);
+    ///
+    /// ```
     pub const fn len(&self) -> usize {
         L::USIZE
     }
 
     /// Returns whether the list is empty
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    ///
+    /// assert!(NList::nil::<u32>().is_empty());
+    ///
+    /// assert!(!nlist![5].is_empty());
+    ///
+    /// assert!(!nlist![8, 5].is_empty());
+    ///
+    /// ```
     pub const fn is_empty(&self) -> bool {
         L::USIZE == 0
     }
@@ -915,9 +1132,21 @@ pub enum NodeWit<T, L: PeanoInt> {
 }
 
 const fn index_list<L: PeanoInt>() -> NList<usize, L> {
-    match <NList<usize, L>>::WIT {
-        NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+    const fn inner<OuterL, L>() -> NList<usize, L> 
+    where
+        OuterL: PeanoInt,
+        L: PeanoInt,
+    {
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-        NodeWit::Cons { len_te, .. } => NList::cons_sub(L::USIZE, index_list(), len_te),
+            PeanoWit::PlusOne(len_te) => NList::cons_sub(
+                const { OuterL::USIZE - L::USIZE }, 
+                inner::<OuterL, _>(), 
+                len_te
+            ),
+        }
     }
+
+    inner::<L, L>()
 }
