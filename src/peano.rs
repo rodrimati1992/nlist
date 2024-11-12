@@ -33,6 +33,9 @@ pub type IfZero<L, Then, Else> = <L as PeanoInt>::IfZero<Then, Else>;
 /// Type alias form of [`PeanoInt::IfZeroPI`]
 pub type IfZeroPI<L, Then, Else> = <L as PeanoInt>::IfZeroPI<Then, Else>;
 
+/// Type alias form of [`PeanoInt::SubSat`]
+pub type SubSat<Lhs, Rhs> = <Lhs as PeanoInt>::SubSat<Rhs>;
+
 /// Type alias form of [`PeanoInt::Add`]
 pub type Add<Lhs, Rhs> = <Lhs as PeanoInt>::Add<Rhs>;
 
@@ -58,6 +61,9 @@ pub trait PeanoInt: Copy + 'static {
 
     /// Variant of `IfZero` which takes and evaluates to types that impl `PeanoInt`
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt>: PeanoInt;
+
+    /// Type level equivalent of `.saturating_sub(R)`
+    type SubSat<R: PeanoInt>: PeanoInt;
 
     /// Computes the addition of `Self` and `Rhs`
     type Add<Rhs: PeanoInt>: PeanoInt;
@@ -91,6 +97,8 @@ impl PeanoInt for Zero {
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Then;
 
+    type SubSat<R: PeanoInt> = Zero;
+
     type Add<Rhs: PeanoInt> = Rhs;
 
     type Mul<Rhs: PeanoInt> = Zero;
@@ -118,6 +126,8 @@ where
     type IfZero<Then, Else> = Else;
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Else;
+
+    type SubSat<R: PeanoInt> = R::IfZeroPI<Self, T::SubSat<R::SubOneSat>>;
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
 

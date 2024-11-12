@@ -8,7 +8,9 @@ use core::marker::PhantomData;
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use crate::peano::{self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, SubOneSat, Usize, Zero};
+use crate::peano::{
+    self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, SubOneSat, Usize, Zero,
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 
@@ -122,16 +124,16 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Constructs an NList from an array
-    /// 
+    ///
     /// # Example
-    /// 
+    ///
     /// ```rust
     /// use nlist::{NList, nlist};
-    /// 
+    ///
     /// let nlist: NList<u32, _> = NList::from_array([3, 5, 8, 13, 21]);
-    /// 
+    ///
     /// assert_eq!(nlist, nlist![3, 5, 8, 13, 21]);
-    /// 
+    ///
     /// ```
     pub fn from_array<const N: usize>(array: [T; N]) -> Self
     where
@@ -139,7 +141,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         let mut iter = array.into_iter();
 
-        Self::from_fn(|_| iter.next().expect("calling iter.next() `L` times shouldn't panic"))
+        Self::from_fn(|_| {
+            iter.next()
+                .expect("calling iter.next() `L` times shouldn't panic")
+        })
     }
 
     /// Alternate constructor for [`NList::nil`],
@@ -519,6 +524,7 @@ impl<T, L: PeanoInt> NList<T, L> {
 }
 
 mod flatten;
+mod splitting;
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Consumes and returns a reversed version of this list
@@ -674,16 +680,16 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     ///
     /// let list: NList<&str, peano!(4)> = nlist!["hello", "world", "foo", "bar"];
-    /// 
+    ///
     /// let array: [&str; 4] = list.into_array();
-    /// 
+    ///
     /// assert_eq!(array, ["hello", "world", "foo", "bar"])
     ///
     /// ```
     ///
-    pub fn into_array<const N: usize>(self) -> [T; N] 
+    pub fn into_array<const N: usize>(self) -> [T; N]
     where
-        L: IntoUsize<Usize = Usize<N>>
+        L: IntoUsize<Usize = Usize<N>>,
     {
         let mut array = [const { None }; N];
 
@@ -847,11 +853,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     };
 }
 
-
-
 impl<T, L, const N: usize> From<NList<T, L>> for [T; N]
 where
-    L: IntoUsize<Usize = Usize<N>>
+    L: IntoUsize<Usize = Usize<N>>,
 {
     fn from(list: NList<T, L>) -> [T; N] {
         list.into_array()
@@ -861,14 +865,12 @@ where
 impl<T, L, const N: usize> From<[T; N]> for NList<T, L>
 where
     L: PeanoInt,
-    Usize<N>: IntoPeano<Peano = L>
+    Usize<N>: IntoPeano<Peano = L>,
 {
     fn from(list: [T; N]) -> NList<T, L> {
         NList::from_array(list)
     }
 }
-
-
 
 /// Type witness for the type of the `node` field in [`NList<T, L>`](NList),
 /// and the `L` parameter itself
