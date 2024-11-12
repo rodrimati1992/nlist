@@ -52,7 +52,7 @@ pub type Min<Lhs, Rhs> = <Lhs as PeanoInt>::Min<Rhs>;
 pub type Max<Lhs, Rhs> = <Lhs as PeanoInt>::Max<Rhs>;
 
 /// Trait for peano numbers, a type-level encoding of unsigned integers.
-pub trait PeanoInt: Copy + 'static {
+pub trait PeanoInt: Copy + Sync + Send + 'static {
     /// Type level equivalent of `.saturating_sub(1)`
     type SubOneSat: PeanoInt;
 

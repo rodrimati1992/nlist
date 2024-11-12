@@ -80,9 +80,22 @@ pub type Node<T, L> = <L as PeanoInt>::IfZero<Nil<T, L>, Cons<T, L>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
-impl<T> NList<T, Zero> {
+impl NList<(), Zero> {
     /// Constructs an empty `NList`
-    pub const fn nil() -> NList<T, Zero> {
+    ///  
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    /// 
+    /// let list = NList::nil::<u8>();
+    /// 
+    /// assert_eq!(list, nlist![]);
+    /// assert_eq!(list.into_array(), []);
+    /// 
+    /// ```
+    /// 
+    pub const fn nil<T>() -> NList<T, Zero> {
         NList {
             node: Nil(TypeEq::NEW, PhantomData),
         }
@@ -91,6 +104,25 @@ impl<T> NList<T, Zero> {
 
 impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// Constructs an `NList` with the head element, and the rest of the list.
+    ///  
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, nlist};
+    /// 
+    /// let list_1 = NList::cons(3, NList::nil());
+    /// assert_eq!(list_1, nlist![3]);
+    /// assert_eq!(list_1.copy().into_array(), [3]);
+    /// 
+    /// let list_2 = NList::cons(5, list_1);
+    /// assert_eq!(list_2, nlist![5, 3]);
+    /// assert_eq!(list_2.copy().into_array(), [5, 3]);
+    /// 
+    /// let list_3 = NList::cons(8, list_2);
+    /// assert_eq!(list_3, nlist![8, 5, 3]);
+    /// assert_eq!(list_3.copy().into_array(), [8, 5, 3]);
+    /// ```
+    /// 
     pub const fn cons(val: T, next: NList<T, L>) -> Self {
         NList {
             node: Cons {
@@ -863,7 +895,7 @@ pub enum NodeWit<T, L: PeanoInt> {
     },
     /// Proof that the list is nonempty
     Cons {
-        /// Proof that `Node<T, L> == Nil<T, PlusOne<L::SubOneSat>>`
+        /// Proof that `Node<T, L> == Cons<T, PlusOne<L::SubOneSat>>`
         node_te: TypeEq<Node<T, L>, Cons<T, PlusOne<L::SubOneSat>>>,
         /// Proof that `L == PlusOne<L::SubOneSat>`
         len_te: TypeEq<L, PlusOne<L::SubOneSat>>,

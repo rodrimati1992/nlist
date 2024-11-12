@@ -9,7 +9,22 @@ use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
     ///
-    /// Returns `None` if the index is out of bounds.
+    /// Returns `None` if the index is greater than `self.len()`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use nlist::{NList, nlist, peano};
+    ///
+    /// let list = nlist![3, 5, 8, 13];
+    ///
+    /// assert_eq!(list.get(0), Some(&3));
+    /// assert_eq!(list.get(1), Some(&5));
+    /// assert_eq!(list.get(2), Some(&8));
+    /// assert_eq!(list.get(3), Some(&13));
+    /// assert_eq!(list.get(4), None);
+    ///
+    /// ```
     pub const fn get(&self, index: usize) -> Option<&T> {
         match Self::WIT {
             NodeWit::Nil { .. } => None,
@@ -27,7 +42,22 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Returns a mutable reference to the element at the `index` index.
     ///
-    /// Returns `None` if the index is out of bounds.
+    /// Returns `None` if the index is greater than `self.len()`.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use nlist::{NList, nlist, peano};
+    ///
+    /// let mut list = nlist![3, 5, 8, 13];
+    ///
+    /// assert_eq!(list.get_mut(0), Some(&mut 3));
+    /// assert_eq!(list.get_mut(1), Some(&mut 5));
+    /// assert_eq!(list.get_mut(2), Some(&mut 8));
+    /// assert_eq!(list.get_mut(3), Some(&mut 13));
+    /// assert_eq!(list.get_mut(4), None);
+    ///
+    /// ```
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         match Self::WIT {
             NodeWit::Nil { .. } => None,
