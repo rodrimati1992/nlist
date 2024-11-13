@@ -41,7 +41,6 @@ pub use typewit;
 #[macro_use]
 mod macros;
 
-/// Type-level integers which use a unary representation
 pub mod peano;
 
 mod nlist;

@@ -49,11 +49,23 @@ impl<Rhs: PeanoInt> PartialEq<Rhs> for Zero {
     }
 }
 
+impl PartialEq<usize> for Zero {
+    fn eq(&self, rhs: &usize) -> bool {
+        0 == *rhs
+    }
+}
+
 impl Eq for Zero {}
 
 impl<Rhs: PeanoInt> PartialOrd<Rhs> for Zero {
     fn partial_cmp(&self, _: &Rhs) -> Option<Ordering> {
         0.partial_cmp(&Rhs::USIZE)
+    }
+}
+
+impl PartialOrd<usize> for Zero {
+    fn partial_cmp(&self, rhs: &usize) -> Option<Ordering> {
+        0.partial_cmp(rhs)
     }
 }
 
@@ -67,7 +79,13 @@ impl Ord for Zero {
 
 impl<T: PeanoInt, Rhs: PeanoInt> PartialEq<Rhs> for PlusOne<T> {
     fn eq(&self, _: &Rhs) -> bool {
-        T::USIZE == Rhs::USIZE
+        Self::USIZE == Rhs::USIZE
+    }
+}
+
+impl<T: PeanoInt> PartialEq<usize> for PlusOne<T> {
+    fn eq(&self, rhs: &usize) -> bool {
+        Self::USIZE == *rhs
     }
 }
 
@@ -75,7 +93,13 @@ impl<T: PeanoInt> Eq for PlusOne<T> {}
 
 impl<T: PeanoInt, Rhs: PeanoInt> PartialOrd<Rhs> for PlusOne<T> {
     fn partial_cmp(&self, _: &Rhs) -> Option<Ordering> {
-        T::USIZE.partial_cmp(&Rhs::USIZE)
+        Self::USIZE.partial_cmp(&Rhs::USIZE)
+    }
+}
+
+impl<T: PeanoInt> PartialOrd<usize> for PlusOne<T> {
+    fn partial_cmp(&self, rhs: &usize) -> Option<Ordering> {
+        Self::USIZE.partial_cmp(rhs)
     }
 }
 
@@ -95,7 +119,7 @@ impl Hash for Zero {
 
 impl<T: PeanoInt> Hash for PlusOne<T> {
     fn hash<H: Hasher>(&self, hasher: &mut H) {
-        T::USIZE.hash(hasher)
+        Self::USIZE.hash(hasher)
     }
 }
 
