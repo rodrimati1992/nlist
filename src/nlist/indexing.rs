@@ -14,7 +14,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist};
     ///
     /// let list = nlist![3, 5, 8, 13];
     ///
@@ -47,7 +47,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist};
     ///
     /// let mut list = nlist![3, 5, 8, 13];
     ///
@@ -78,14 +78,14 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
     /// let list = nlist![3, 5, 8, 13];
     ///
-    /// assert_eq!(list.index::<peano!(0)>(), &3);
-    /// assert_eq!(list.index::<peano!(1)>(), &5);
-    /// assert_eq!(list.index::<peano!(2)>(), &8);
-    /// assert_eq!(list.index::<peano!(3)>(), &13);
+    /// assert_eq!(list.index::<Peano!(0)>(), &3);
+    /// assert_eq!(list.index::<Peano!(1)>(), &5);
+    /// assert_eq!(list.index::<Peano!(2)>(), &8);
+    /// assert_eq!(list.index::<Peano!(3)>(), &13);
     ///
     ///
     /// ```
@@ -115,14 +115,14 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
     /// let mut list = nlist![3, 5, 8, 13];
     ///
-    /// assert_eq!(list.index_mut::<peano!(0)>(), &mut 3);
-    /// assert_eq!(list.index_mut::<peano!(1)>(), &mut 5);
-    /// assert_eq!(list.index_mut::<peano!(2)>(), &mut 8);
-    /// assert_eq!(list.index_mut::<peano!(3)>(), &mut 13);
+    /// assert_eq!(list.index_mut::<Peano!(0)>(), &mut 3);
+    /// assert_eq!(list.index_mut::<Peano!(1)>(), &mut 5);
+    /// assert_eq!(list.index_mut::<Peano!(2)>(), &mut 8);
+    /// assert_eq!(list.index_mut::<Peano!(3)>(), &mut 13);
     ///
     ///
     /// ```

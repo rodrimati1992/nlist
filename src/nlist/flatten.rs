@@ -151,10 +151,10 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             const NEW: Self = match (
                 LSub::PEANO_WIT,
                 LOuter::PEANO_WIT,
-                peano::cmp_peanos(LAcc::NEW, LRet::NEW),
+                peano::cmp(LAcc::NEW, LRet::NEW),
             ) {
                 (lsub_wit @ PeanoWit::PlusOne(sub_te), _, TypeCmp::Ne(_)) => {
-                    let TypeCmp::Eq(output_te) = peano::cmp_peanos(
+                    let TypeCmp::Eq(output_te) = peano::cmp(
                         PlusOne::<LAcc>::NEW,
                         peano::Min::<PlusOne<LAcc>, LRet>::NEW,
                     ) else {

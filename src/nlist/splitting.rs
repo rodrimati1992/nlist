@@ -10,11 +10,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
     /// let list = nlist![3, 5, 8, 13, 21, 34];
     ///
-    /// let (before, after) = list.split_at::<peano!(4)>();
+    /// let (before, after) = list.split_at::<Peano!(4)>();
     /// assert_eq!(before, nlist![3, 5, 8, 13]);
     /// assert_eq!(after, nlist![21, 34]);
     ///
@@ -52,8 +52,8 @@ impl<T, L: PeanoInt> NList<T, L> {
             const NEW: Self = match (
                 L::PEANO_WIT,
                 At::PEANO_WIT,
-                peano::cmp_peanos(peano::Min::<SubOneSat<L>, Rem>::NEW, Rem::NEW),
-                peano::cmp_peanos(L::NEW, Rem::NEW),
+                peano::cmp(peano::Min::<SubOneSat<L>, Rem>::NEW, Rem::NEW),
+                peano::cmp(L::NEW, Rem::NEW),
             ) {
                 (PeanoWit::PlusOne(input_te), PeanoWit::PlusOne(at_te), TypeCmp::Eq(rem_te), _) => {
                     SplitState::Iterating {

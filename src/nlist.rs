@@ -140,9 +140,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
-    /// let nlist: NList<_, peano!(4)> = NList::repeat_copy(3);
+    /// let nlist: NList<_, Peano!(4)> = NList::repeat_copy(3);
     ///
     /// assert_eq!(nlist, nlist![3, 3, 3, 3]);
     /// assert_eq!(nlist, nlist![3; 4]);
@@ -164,9 +164,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
-    /// let list: NList<_, peano!(4)> = NList::from_fn(|i| i.pow(2));
+    /// let list: NList<_, Peano!(4)> = NList::from_fn(|i| i.pow(2));
     ///
     /// assert_eq!(list, nlist![0, 1, 4, 9]);
     /// ```
@@ -256,7 +256,7 @@ where
     L2: PeanoInt,
 {
     fn eq(&self, rhs: &NList<U, L2>) -> bool {
-        let TypeCmp::Eq(te_len) = peano::cmp_peanos(L::NEW, L2::NEW) else {
+        let TypeCmp::Eq(te_len) = peano::cmp(L::NEW, L2::NEW) else {
             return false;
         };
 
@@ -682,10 +682,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
     ///
-    /// let list: NList<&str, peano!(4)> = nlist!["hello", "world", "foo", "bar"];
+    /// let list: NList<&str, Peano!(4)> = nlist!["hello", "world", "foo", "bar"];
     ///
     /// let array: [&str; 4] = list.into_array();
     ///
@@ -709,10 +709,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
-    /// let list: NList<u8, peano!(3)> = nlist![3, 5, 8];
-    /// let copy: NList<u8, peano!(3)> = list.copy();
+    /// let list: NList<u8, Peano!(3)> = nlist![3, 5, 8];
+    /// let copy: NList<u8, Peano!(3)> = list.copy();
     ///
     /// assert_eq!(list, nlist![3, 5, 8]);
     /// assert_eq!(copy, nlist![3, 5, 8]);
@@ -739,11 +739,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
-    /// let list: NList<u8, peano!(3)> = nlist![3, 5, 8];
+    /// let list: NList<u8, Peano!(3)> = nlist![3, 5, 8];
     ///
-    /// let refs: NList<&u8, peano!(3)> = list.each_ref();
+    /// let refs: NList<&u8, Peano!(3)> = list.each_ref();
     /// assert_eq!(refs, nlist![&3, &5, &8]);
     ///
     /// ```
@@ -765,11 +765,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist, peano};
+    /// use nlist::{NList, nlist, Peano};
     ///
-    /// let mut list: NList<u8, peano!(3)> = nlist![3, 5, 8];
+    /// let mut list: NList<u8, Peano!(3)> = nlist![3, 5, 8];
     ///
-    /// let muts: NList<&mut u8, peano!(3)> = list.each_mut();
+    /// let muts: NList<&mut u8, Peano!(3)> = list.each_mut();
     /// assert_eq!(muts, nlist![&3, &5, &8]);
     ///
     /// ```
@@ -791,6 +791,36 @@ impl<T, L: PeanoInt> NList<T, L> {
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Given a proof that `L == L2`, coerces `NList<T, L>` to `NList<T, L2>`
+    /// 
+    /// # Example
+    /// 
+    /// Emulating specialization over list length,
+    /// the function behaves differently for length 3 and 5 than with other lengths.
+    /// 
+    /// ```rust
+    /// use nlist::{NList, Peano, PeanoInt, nlist, peano};
+    /// use nlist::typewit::TypeCmp;
+    /// 
+    /// pub const fn make_list<L: PeanoInt>() -> NList<usize, L> {
+    ///     if let TypeCmp::Eq(len_te) = peano::cmp(peano!(3), L::NEW) {
+    ///         nlist![3, 5, 8].coerce_len(len_te)
+    ///     } else if let TypeCmp::Eq(len_te) = peano::cmp(peano!(5), L::NEW) {
+    ///         nlist![3, 5, 8, 13, 21].coerce_len(len_te)
+    ///     } else {
+    ///         NList::repeat_copy(L::USIZE)
+    ///     }
+    /// }
+    /// 
+    /// assert_eq!(make_list::<Peano!(0)>(), nlist![]);
+    /// assert_eq!(make_list::<Peano!(1)>(), nlist![1]);
+    /// assert_eq!(make_list::<Peano!(2)>(), nlist![2, 2]);
+    /// assert_eq!(make_list::<Peano!(3)>(), nlist![3, 5, 8]);
+    /// assert_eq!(make_list::<Peano!(4)>(), nlist![4, 4, 4, 4]);
+    /// assert_eq!(make_list::<Peano!(5)>(), nlist![3, 5, 8, 13, 21]);
+    /// assert_eq!(make_list::<Peano!(6)>(), nlist![6, 6, 6, 6, 6, 6]);
+    /// 
+    /// 
+    /// ```
     pub const fn coerce_len<L2: PeanoInt>(self, len_te: TypeEq<L, L2>) -> NList<T, L2> {
         len_te.map(NListFn::NEW).to_right(self)
     }

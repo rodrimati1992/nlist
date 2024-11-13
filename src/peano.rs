@@ -194,7 +194,7 @@ mod peano_cmp_wit {
 use peano_cmp_wit::{PairOfPeanos, PeanoCmpWit};
 
 /// Returns a [`TypeCmp<L, R>`], which is a proof of whether `L == R` or `L != R`.
-pub const fn cmp_peanos<L, R>(_: L, _: R) -> TypeCmp<L, R>
+pub const fn cmp<L, R>(_: L, _: R) -> TypeCmp<L, R>
 where
     L: PeanoInt,
     R: PeanoInt,

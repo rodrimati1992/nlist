@@ -3,10 +3,9 @@
 //! # Example
 //!
 //! ```rust
-//! use nlist::{nlist, peano};
-//! use nlist::{NList, PeanoInt};
+//! use nlist::{NList, Peano, PeanoInt, nlist, peano};
 //!
-//! fn transform<T, L>(list: NList<T, L>) -> NList<i128, peano::Add<L, peano!(1)>>
+//! fn transform<T, L>(list: NList<T, L>) -> NList<i128, peano::Add<L, Peano!(1)>>
 //! where
 //!     T: Into<i128>,
 //!     L: PeanoInt,
@@ -35,6 +34,9 @@
 
 #[cfg(feature = "alloc")]
 extern crate alloc;
+
+#[doc(no_inline)]
+pub use typewit;
 
 #[macro_use]
 mod macros;
