@@ -1,4 +1,10 @@
-use core::marker::PhantomData;
+use core::{
+    cmp::{Eq, Ord, PartialEq, PartialOrd},
+    fmt,
+    hash::Hash,
+    marker::PhantomData,
+};
+
 
 use typewit::{TypeCmp, TypeEq, TypeNe};
 
@@ -19,13 +25,10 @@ pub struct PlusOne<T> {
     pub sub_one: T,
 }
 
-impl<T: Copy> Copy for PlusOne<T> {}
+// The impls of std traits for Zero and PlusOne are all here
+mod std_impls;
 
-impl<T: Copy> Clone for PlusOne<T> {
-    fn clone(&self) -> Self {
-        *self
-    }
-}
+
 
 /// Type alias form of [`PeanoInt::SubOneSat`]
 pub type SubOneSat<Lhs> = <Lhs as PeanoInt>::SubOneSat;
@@ -52,7 +55,15 @@ pub type Min<Lhs, Rhs> = <Lhs as PeanoInt>::Min<Rhs>;
 pub type Max<Lhs, Rhs> = <Lhs as PeanoInt>::Max<Rhs>;
 
 /// Trait for peano numbers, a type-level encoding of unsigned integers.
-pub trait PeanoInt: Copy + Sync + Send + 'static {
+/// 
+/// Only [`Zero`] and [`PlusOne`] implement this trait,
+/// no other type can implement it.
+pub trait PeanoInt: 
+    Copy + Default + Hash + Sync + Send +
+    Eq + Ord + PartialEq + PartialOrd +
+    fmt::Binary + fmt::Debug + fmt::Display + fmt::LowerHex + fmt::Octal + fmt::UpperHex +
+    'static 
+{
     /// Type level equivalent of `.saturating_sub(1)`
     type SubOneSat: PeanoInt;
 

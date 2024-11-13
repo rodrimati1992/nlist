@@ -1,8 +1,11 @@
 use typewit::{TypeCmp, TypeEq};
 
-use core::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
-use core::fmt::{self, Debug};
-use core::marker::PhantomData;
+use core::{
+    cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
+    fmt::{self, Debug},
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+};
 
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
@@ -245,6 +248,29 @@ where
         });
 
         fmt.finish()
+    }
+}
+
+impl<T, L> Hash for NList<T, L>
+where
+    T: Hash,
+    L: PeanoInt,
+{
+    fn hash<H: Hasher>(&self, hasher: &mut H) {
+        // hack to prepend the length of the list to the hasher
+        const { [(); usize::MAX].split_at(L::USIZE).0 }.hash(hasher);
+
+        self.each_ref().for_each(|_, elem| elem.hash(hasher));
+    }
+}
+
+impl<T, L> Default for NList<T, L>
+where
+    T: Default,
+    L: PeanoInt,
+{
+    fn default() -> Self {
+        Self::from_fn(|_| T::default())
     }
 }
 
