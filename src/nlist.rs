@@ -802,10 +802,13 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// use nlist::typewit::TypeCmp;
     /// 
     /// pub const fn make_list<L: PeanoInt>() -> NList<usize, L> {
-    ///     if let TypeCmp::Eq(len_te) = peano::cmp(peano!(3), L::NEW) {
-    ///         nlist![3, 5, 8].coerce_len(len_te)
-    ///     } else if let TypeCmp::Eq(len_te) = peano::cmp(peano!(5), L::NEW) {
-    ///         nlist![3, 5, 8, 13, 21].coerce_len(len_te)
+    ///     if let TypeCmp::Eq(len3_te) = peano::cmp(peano!(3), L::NEW) {
+    ///         // len3_te is a proof that `Peano!(3) == L`
+    ///         // which allows us to coerce `NList<T, Peano!(3)>` to `NList<T, L>`
+    ///         nlist![3, 5, 8].coerce_len(len3_te)
+    ///     } else if let TypeCmp::Eq(len5_te) = peano::cmp(peano!(5), L::NEW) {
+    ///         // len5_te is a proof that `Peano!(5) == L`
+    ///         nlist![3, 5, 8, 13, 21].coerce_len(len5_te)
     ///     } else {
     ///         NList::repeat_copy(L::USIZE)
     ///     }
@@ -826,6 +829,36 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Given a proof that `L == L2`, coerces `&NList<T, L>` to `&NList<T, L2>`
+    /// 
+    /// # Example
+    /// 
+    /// Writing a const summing function.
+    /// 
+    /// Because [`NList::fold`] can't be called in `const`, 
+    /// `const_sum` uses manual recursion to add up all the numbers in the list.
+    /// 
+    /// ```rust
+    /// use nlist::{NList, PeanoWit, PeanoInt, nlist};
+    /// 
+    /// const SUM: u64 = const_sum(nlist![3, 5, 8 ,13]);
+    /// 
+    /// assert_eq!(SUM, 29);
+    /// 
+    /// const fn const_sum<L>(list: &NList<u64, L>) -> u64
+    /// where
+    ///     L: PeanoInt
+    /// {
+    ///     // `len_te` is a proof that the length of the list is at least one
+    ///     // `len_te: TypeEq<L, PlusOne<L::SubOneSat>>`
+    ///     if let PeanoWit::PlusOne(len_te) = NList::<L>::WIT {
+    ///         let listp1: &NList<u64, PlusOne<L::SubOneSat>> = list.as_coerce_len(len_te);
+    ///         let (elem, tail): (&u64, &NList<u64, L::SubOneSat>) = listp1.split_head();
+    ///         *elem + sum(tail)
+    ///     } else {
+    ///         0
+    ///     }
+    /// }
+    /// ```
     pub const fn as_coerce_len<L2: PeanoInt>(&self, len_te: TypeEq<L, L2>) -> &NList<T, L2> {
         len_te.map(NListFn::NEW).in_ref().to_right(self)
     }
