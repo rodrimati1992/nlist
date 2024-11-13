@@ -1,18 +1,13 @@
 use const_panic::concat_panic;
 use typewit::{TypeCmp, TypeEq};
 
-use core::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
-use core::fmt::{self, Debug};
-use core::marker::PhantomData;
-
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
-
+#[allow(unused_imports)]
 use crate::peano::{
     self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, SubOneSat, Usize, Zero,
 };
 
-use super::{AddPeanoFn, Nil, Cons, NList, NListFn, NodeFn, NodeWit};
+#[allow(unused_imports)]
+use super::{AddPeanoFn, Nil, Cons, NList, NListFn, NodeFn};
 
 
 
@@ -88,10 +83,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             L: PeanoInt,
             F: FnMut(usize, T) -> Option<R>,
         {
-            match <NList<T, L>>::WIT {
-                NodeWit::Nil { .. } => None,
-                NodeWit::Cons { node_te, .. } => {
-                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+            match L::PEANO_WIT {
+                PeanoWit::Zero { .. } => None,
+                PeanoWit::PlusOne(len_te) => {
+                    let Cons { elem, next, .. } = list.coerce_len(len_te).node;
 
                     if let x @ Some(_) = f(index, elem) {
                         x
@@ -180,10 +175,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             L: PeanoInt,
             F: FnMut(usize, T) -> Option<R>,
         {
-            match <NList<T, L>>::WIT {
-                NodeWit::Nil { .. } => None,
-                NodeWit::Cons { node_te, .. } => {
-                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+            match L::PEANO_WIT {
+                PeanoWit::Zero { .. } => None,
+                PeanoWit::PlusOne(len_te) => {
+                    let Cons { elem, next, .. } = list.coerce_len(len_te).node;
 
                     if let x @ Some(_) = inner(next, index + 1, f) {
                         x
@@ -276,9 +271,9 @@ impl<T, L: PeanoInt> NList<T, L> {
             }
         }
 
-        match Self::WIT {
-            NodeWit::Nil { .. } => self,
-            NodeWit::Cons { len_te, .. } => {
+        match L::PEANO_WIT {
+            PeanoWit::Zero { .. } => self,
+            PeanoWit::PlusOne(len_te) => {
                 let (elem, tail) = self.coerce_len(len_te).into_split_head();
 
                 inner(tail, NList::cons(elem, NList::nil()))
@@ -308,14 +303,14 @@ impl<T, L: PeanoInt> NList<T, L> {
             LA: PeanoInt,
             LB: PeanoInt,
         {
-            match <NList<T, LA>>::WIT {
-                NodeWit::Nil { len_te, .. } => len_te
+            match LA::PEANO_WIT {
+                PeanoWit::Zero(len_te) => len_te
                     .zip(TypeEq::new::<LB>())
                     .map(AddPeanoFn::NEW)
                     .map(NListFn::NEW)
                     .to_left(rhs),
-                NodeWit::Cons { node_te, len_te } => {
-                    let Cons { elem, next, .. } = node_te.to_right(lhs.node);
+                PeanoWit::PlusOne(len_te) => {
+                    let Cons { elem, next, .. } = lhs.coerce_len(len_te).node;
 
                     let len_te = len_te.zip(TypeEq::new::<LB>()).map(AddPeanoFn::NEW);
 
@@ -345,9 +340,9 @@ impl<T, L: PeanoInt> NList<T, L> {
         where
             L: PeanoInt,
         {
-            match <NList<T, L>>::WIT {
-                NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
-                NodeWit::Cons { len_te, .. } => {
+            match L::PEANO_WIT {
+                PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
+                PeanoWit::PlusOne(len_te) => {
                     let lhs = len_te.map(NodeFn::NEW).to_right(lhs.node);
                     let rhs = len_te.map(NodeFn::NEW).to_right(rhs.node);
 
@@ -376,11 +371,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         F: FnMut(T) -> R,
     {
-        match Self::WIT {
-            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-            NodeWit::Cons { node_te, len_te } => {
-                let Cons { elem, next, .. } = node_te.to_right(self.node);
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = self.coerce_len(len_te).node;
                 NList::cons_sub(f(elem), next.map(f), len_te)
             }
         }
@@ -410,8 +405,8 @@ impl<T, L: PeanoInt> NList<T, L> {
             L: PeanoInt,
             F: FnMut(usize, T),
         {
-            if let NodeWit::Cons { node_te, .. } = <NList<T, L>>::WIT {
-                let Cons { elem, next, .. } = node_te.to_right(list.node);
+            if let PeanoWit::PlusOne(len_te) = L::PEANO_WIT {
+                let Cons { elem, next, .. } = list.coerce_len(len_te).node;
                 func(index, elem);
                 inner(next, index + 1, func)
             }
@@ -468,10 +463,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             L: PeanoInt,
             F: FnMut(T) -> bool,
         {
-            match <NList<T, L>>::WIT {
-                NodeWit::Nil { .. } => true,
-                NodeWit::Cons { node_te, .. } => {
-                    let Cons { elem, next, .. } = node_te.to_right(list.node);
+            match L::PEANO_WIT {
+                PeanoWit::Zero { .. } => true,
+                PeanoWit::PlusOne(len_te) => {
+                    let Cons { elem, next, .. } = list.coerce_len(len_te).node;
                     if func(elem) {
                         inner(next, func)
                     } else {
@@ -505,10 +500,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         F: FnMut(A, T) -> A,
     {
-        match Self::WIT {
-            NodeWit::Nil { .. } => initial_value,
-            NodeWit::Cons { node_te, .. } => {
-                let Cons { elem, next, .. } = node_te.to_right(self.node);
+        match L::PEANO_WIT {
+            PeanoWit::Zero { .. } => initial_value,
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = self.coerce_len(len_te).node;
                 next.fold(f(initial_value, elem), f)
             }
         }

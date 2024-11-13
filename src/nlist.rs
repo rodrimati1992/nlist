@@ -1,4 +1,3 @@
-use const_panic::concat_panic;
 use typewit::{TypeCmp, TypeEq};
 
 use core::cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd};
@@ -9,7 +8,7 @@ use core::marker::PhantomData;
 use alloc::vec::Vec;
 
 use crate::peano::{
-    self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, SubOneSat, Usize, Zero,
+    self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero,
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -152,10 +151,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         T: Copy,
     {
-        match Self::WIT {
-            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-            NodeWit::Cons { len_te, .. } => NList::cons_sub(elem, NList::repeat_copy(elem), len_te),
+            PeanoWit::PlusOne(len_te) => NList::cons_sub(elem, NList::repeat_copy(elem), len_te),
         }
     }
 
@@ -306,20 +305,16 @@ where
     L2: PeanoInt,
 {
     fn partial_cmp(&self, rhs: &NList<U, L2>) -> Option<Ordering> {
-        match (NList::<T, L>::WIT, NList::<U, L2>::WIT) {
-            (NodeWit::Nil { .. }, NodeWit::Nil { .. }) => Some(Ordering::Equal),
-            (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Some(Ordering::Less),
-            (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Some(Ordering::Greater),
+        match (L::PEANO_WIT, L2::PEANO_WIT) {
+            (PeanoWit::Zero { .. }, PeanoWit::Zero { .. }) => Some(Ordering::Equal),
+            (PeanoWit::Zero { .. }, PeanoWit::PlusOne { .. }) => Some(Ordering::Less),
+            (PeanoWit::PlusOne { .. }, PeanoWit::Zero { .. }) => Some(Ordering::Greater),
             (
-                NodeWit::Cons {
-                    node_te: l_node_te, ..
-                },
-                NodeWit::Cons {
-                    node_te: r_node_te, ..
-                },
+                PeanoWit::PlusOne(l_len_te),
+                PeanoWit::PlusOne(r_len_te),
             ) => {
-                let lhs = l_node_te.in_ref().to_right(&self.node);
-                let rhs = r_node_te.in_ref().to_right(&rhs.node);
+                let lhs = &self.as_coerce_len(l_len_te).node;
+                let rhs = &rhs.as_coerce_len(r_len_te).node;
 
                 match lhs.elem.partial_cmp(&rhs.elem) {
                     Some(Ordering::Equal) => lhs.next.partial_cmp(&rhs.next),
@@ -370,20 +365,16 @@ where
         T: Ord,
         L2: PeanoInt,
     {
-        match (NList::<T, L>::WIT, NList::<T, L2>::WIT) {
-            (NodeWit::Nil { .. }, NodeWit::Nil { .. }) => Ordering::Equal,
-            (NodeWit::Nil { .. }, NodeWit::Cons { .. }) => Ordering::Less,
-            (NodeWit::Cons { .. }, NodeWit::Nil { .. }) => Ordering::Greater,
+        match (L::PEANO_WIT, L2::PEANO_WIT) {
+            (PeanoWit::Zero { .. }, PeanoWit::Zero { .. }) => Ordering::Equal,
+            (PeanoWit::Zero { .. }, PeanoWit::PlusOne { .. }) => Ordering::Less,
+            (PeanoWit::PlusOne { .. }, PeanoWit::Zero { .. }) => Ordering::Greater,
             (
-                NodeWit::Cons {
-                    node_te: l_node_te, ..
-                },
-                NodeWit::Cons {
-                    node_te: r_node_te, ..
-                },
+                PeanoWit::PlusOne(l_len_te),
+                PeanoWit::PlusOne(r_len_te),
             ) => {
-                let lhs = l_node_te.in_ref().to_right(&self.node);
-                let rhs = r_node_te.in_ref().to_right(&rhs.node);
+                let lhs = &self.as_coerce_len(l_len_te).node;
+                let rhs = &rhs.as_coerce_len(r_len_te).node;
 
                 match lhs.elem.cmp(&rhs.elem) {
                     Ordering::Equal => lhs.next.inherent_cmp(&rhs.next),
@@ -664,8 +655,8 @@ impl<T, L: PeanoInt> NList<T, L> {
     #[cfg(feature = "alloc")]
     pub fn into_vec(self) -> Vec<T> {
         fn to_vec_inner<T, L: PeanoInt>(out: &mut Vec<T>, nlist: NList<T, L>) {
-            if let NodeWit::Cons { node_te, .. } = <NList<T, L>>::WIT {
-                let Cons { elem, next, .. } = node_te.to_right(nlist.node);
+            if let PeanoWit::PlusOne(len_te) = L::PEANO_WIT {
+                let Cons { elem, next, .. } = nlist.coerce_len(len_te).node;
 
                 out.push(elem);
                 to_vec_inner(out, next);
@@ -724,11 +715,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         T: Copy,
     {
-        match Self::WIT {
-            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-            NodeWit::Cons { node_te, len_te } => {
-                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = &self.as_coerce_len(len_te).node;
                 NList::cons_sub(*elem, next.copy(), len_te)
             }
         }
@@ -750,11 +741,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// 
     /// [`Copy`]: core::marker::Copy
     pub const fn each_ref(&self) -> NList<&T, L> {
-        match Self::WIT {
-            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-            NodeWit::Cons { node_te, len_te } => {
-                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = &self.as_coerce_len(len_te).node;
                 NList::cons_sub(elem, next.each_ref(), len_te)
             }
         }
@@ -776,11 +767,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// 
     /// [`Copy`]: core::marker::Copy
     pub fn each_mut(&mut self) -> NList<&mut T, L> {
-        match Self::WIT {
-            NodeWit::Nil { len_te, .. } => NList::nil_sub(len_te),
+        match L::PEANO_WIT {
+            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
-            NodeWit::Cons { node_te, len_te } => {
-                let Cons { elem, next, .. } = node_te.in_mut().to_right(&mut self.node);
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = &mut self.as_mut_coerce_len(len_te).node;
                 NList::cons_sub(elem, next.each_mut(), len_te)
             }
         }
@@ -838,9 +829,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// `const_sum` uses manual recursion to add up all the numbers in the list.
     /// 
     /// ```rust
-    /// use nlist::{NList, PeanoWit, PeanoInt, nlist};
+    /// use nlist::{NList, PeanoWit, PeanoInt, PlusOne, nlist};
     /// 
-    /// const SUM: u64 = const_sum(nlist![3, 5, 8 ,13]);
+    /// const SUM: u64 = const_sum(&nlist![3, 5, 8 ,13]);
     /// 
     /// assert_eq!(SUM, 29);
     /// 
@@ -850,10 +841,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// {
     ///     // `len_te` is a proof that the length of the list is at least one
     ///     // `len_te: TypeEq<L, PlusOne<L::SubOneSat>>`
-    ///     if let PeanoWit::PlusOne(len_te) = NList::<L>::WIT {
+    ///     if let PeanoWit::PlusOne(len_te) = L::PEANO_WIT {
     ///         let listp1: &NList<u64, PlusOne<L::SubOneSat>> = list.as_coerce_len(len_te);
     ///         let (elem, tail): (&u64, &NList<u64, L::SubOneSat>) = listp1.split_head();
-    ///         *elem + sum(tail)
+    ///         *elem + const_sum(tail)
     ///     } else {
     ///         0
     ///     }
@@ -870,21 +861,6 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         len_te.map(NListFn::NEW).in_mut().to_right(self)
     }
-}
-
-impl<T, L: PeanoInt> NList<T, L> {
-    /// Type witness for the type of the `node` field in `NList<T, L>`,
-    /// and the `L` parameter itself
-    pub const WIT: NodeWit<T, L> = match L::PEANO_WIT {
-        PeanoWit::Zero(len_te) => NodeWit::Nil {
-            node_te: len_te.map(NodeFn::NEW),
-            len_te,
-        },
-        PeanoWit::PlusOne(len_te) => NodeWit::Cons {
-            node_te: len_te.map(NodeFn::NEW),
-            len_te,
-        },
-    };
 }
 
 impl<T, L, const N: usize> From<NList<T, L>> for [T; N]
@@ -904,25 +880,6 @@ where
     fn from(list: [T; N]) -> NList<T, L> {
         NList::from_array(list)
     }
-}
-
-/// Type witness for the type of the `node` field in [`NList<T, L>`](NList),
-/// and the `L` parameter itself
-pub enum NodeWit<T, L: PeanoInt> {
-    /// Proof that the list is empty
-    Nil {
-        /// Proof that `Node<T, L> == Nil<T, Zero>`
-        node_te: TypeEq<Node<T, L>, Nil<T, Zero>>,
-        /// Proof that `L == Zero`
-        len_te: TypeEq<L, Zero>,
-    },
-    /// Proof that the list is nonempty
-    Cons {
-        /// Proof that `Node<T, L> == Cons<T, PlusOne<L::SubOneSat>>`
-        node_te: TypeEq<Node<T, L>, Cons<T, PlusOne<L::SubOneSat>>>,
-        /// Proof that `L == PlusOne<L::SubOneSat>`
-        len_te: TypeEq<L, PlusOne<L::SubOneSat>>,
-    },
 }
 
 const fn index_list<L: PeanoInt>() -> NList<usize, L> {

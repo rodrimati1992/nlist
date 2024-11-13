@@ -1,7 +1,7 @@
 use const_panic::concat_panic;
 use typewit::TypeEq;
 
-use super::{Cons, NList, NodeWit};
+use super::{Cons, NList};
 
 #[allow(unused_imports)]
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
@@ -26,10 +26,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     /// ```
     pub const fn get(&self, index: usize) -> Option<&T> {
-        match Self::WIT {
-            NodeWit::Nil { .. } => None,
-            NodeWit::Cons { node_te, .. } => {
-                let Cons { elem, next, .. } = node_te.in_ref().to_right(&self.node);
+        match L::PEANO_WIT {
+            PeanoWit::Zero { .. } => None,
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = &self.as_coerce_len(len_te).node;
 
                 if let Some(sub1) = index.checked_sub(1) {
                     next.get(sub1)
@@ -59,10 +59,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     /// ```
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        match Self::WIT {
-            NodeWit::Nil { .. } => None,
-            NodeWit::Cons { node_te, .. } => {
-                let Cons { elem, next, .. } = node_te.in_mut().to_right(&mut self.node);
+        match L::PEANO_WIT {
+            PeanoWit::Zero { .. } => None,
+            PeanoWit::PlusOne(len_te) => {
+                let Cons { elem, next, .. } = &mut self.as_mut_coerce_len(len_te).node;
 
                 if let Some(sub1) = index.checked_sub(1) {
                     next.get_mut(sub1)

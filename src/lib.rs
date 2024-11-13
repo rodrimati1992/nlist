@@ -48,5 +48,5 @@ mod nlist;
 
 pub use crate::{
     nlist::*,
-    peano::{PeanoInt, PlusOne, Zero},
+    peano::{PeanoInt, PeanoWit, PlusOne, Zero},
 };
