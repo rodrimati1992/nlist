@@ -14,14 +14,39 @@ use typewit::{TypeCmp, TypeEq, TypeNe, TypeFn};
 
 mod from_const;
 
+/// `typewit::TypeFn` equivalents of peano type aliases
+pub mod type_fns;
+
+#[doc(no_inline)]
+pub use self::type_fns::*;
+
+
 #[doc(no_inline)]
 pub use typewit::const_marker::Usize;
 
 pub use self::from_const::{FromPeano, FromUsize, IntoPeano, IntoUsize};
 
+///////////////////////////////////////////////////////////////////////////////
+
+macro_rules! integer_methods {
+    () => (
+        /// The usize value of this integer
+        pub const fn usize(self) -> usize {
+            Self::USIZE
+        }
+    )
+}
+
+
+
 /// Type-level encoding of `0`
 #[derive(Copy, Clone)]
 pub struct Zero;
+
+impl Zero {
+    integer_methods!{}
+}
+
 
 /// Type-level encoding of `T + 1`
 pub struct PlusOne<T> {
@@ -29,10 +54,14 @@ pub struct PlusOne<T> {
     pub sub_one: T,
 }
 
+impl<T: PeanoInt> PlusOne<T> {
+    integer_methods!{}
+}
+
 // The impls of std traits for Zero and PlusOne are all here
 mod std_impls;
 
-
+///////////////////////////////////////////////////////////////////////////////
 
 /// Type alias form of [`PeanoInt::SubOneSat`]
 pub type SubOneSat<Lhs> = <Lhs as PeanoInt>::SubOneSat;
@@ -439,14 +468,14 @@ mod peano_cmp_wit {
         type L: PeanoInt;
         type R: PeanoInt;
 
-        const CMP_WIT: TypeCmp<Self::L, Self::R>;
+        const EQ_WIT: TypeCmp<Self::L, Self::R>;
     }
 
     impl<R: PeanoInt> PeanoCmpWit for PairOfPeanos<Zero, R> {
         type L = Zero;
         type R = R;
 
-        const CMP_WIT: TypeCmp<Zero, R> = match R::PEANO_WIT {
+        const EQ_WIT: TypeCmp<Zero, R> = match R::PEANO_WIT {
             PeanoWit::Zero(r_te) => TypeCmp::Eq(r_te.flip()),
             PeanoWit::PlusOne(r_te) => TypeCmp::Ne(zero_one_inequality().join_right(r_te.flip())),
         };
@@ -456,11 +485,11 @@ mod peano_cmp_wit {
         type L = PlusOne<L>;
         type R = R;
 
-        const CMP_WIT: TypeCmp<PlusOne<L>, R> = match R::PEANO_WIT {
+        const EQ_WIT: TypeCmp<PlusOne<L>, R> = match R::PEANO_WIT {
             PeanoWit::Zero(r_te) => {
                 TypeCmp::Ne(zero_one_inequality().flip().join_right(r_te.flip()))
             }
-            PeanoWit::PlusOne(r_te) => <L as PeanoInt>::__PairOfPeanos::<R::SubOneSat>::CMP_WIT
+            PeanoWit::PlusOne(r_te) => <L as PeanoInt>::__PairOfPeanos::<R::SubOneSat>::EQ_WIT
                 .map(PlusOneFn)
                 .join_right(r_te.flip()),
         };
@@ -468,18 +497,52 @@ mod peano_cmp_wit {
 }
 use peano_cmp_wit::{PairOfPeanos, PeanoCmpWit};
 
+
+////////////////////////////////////////////////////////////////////////////////
+
+/// Converts the peano integer to a usize
+pub const fn to_usize<I: PeanoInt>(_: I) -> usize {
+    I::USIZE
+}
+
+////////////////////////////////////////////////////////////////////////////////
+
+
 /// Returns a [`TypeCmp<L, R>`], which is a proof of whether `L == R` or `L != R`.
-pub const fn cmp<L, R>(_: L, _: R) -> TypeCmp<L, R>
+pub const fn eq<L, R>(_: L, _: R) -> TypeCmp<L, R>
 where
     L: PeanoInt,
     R: PeanoInt,
 {
-    <L as PeanoInt>::__PairOfPeanos::<R>::CMP_WIT
+    <L as PeanoInt>::__PairOfPeanos::<R>::EQ_WIT
 }
+
+/// Returns a [`TypeCmp`] proof of whether `L <= R` is true.
+pub const fn check_le<L, R>(_: L, _: R) -> TypeCmp<R, Add<L, SubSat<R, L>>>
+where
+    L: PeanoInt,
+    R: PeanoInt,
+{
+    self::eq(PeanoInt::NEW, PeanoInt::NEW)
+}
+
+
+
+
 
 const fn zero_one_inequality<L: PeanoInt>() -> TypeNe<Zero, PlusOne<L>> {
     typewit::type_ne!(<L: PeanoInt> Zero, PlusOne<L>)
 }
+
+
+
+typewit::inj_type_fn! {
+    struct PlusOneFn;
+
+    impl<L: PeanoInt> L => PlusOne<L>;
+}
+
+
 
 /// Diverges when given a proof of `PlusOne<L> == Zero`
 /// (which is a contradiction, because they're different types).
@@ -492,10 +555,4 @@ pub const fn contradiction<L>(length_te: TypeEq<PlusOne<L>, Zero>) -> ! {
     }
 
     length_te.map(ZeroEqualsOneFn::NEW).to_left(())
-}
-
-typewit::inj_type_fn! {
-    struct PlusOneFn;
-
-    impl<L: PeanoInt> L => PlusOne<L>;
 }

@@ -7,7 +7,7 @@ use crate::peano::{
 };
 
 #[allow(unused_imports)]
-use super::{AddPeanoFn, Nil, Cons, NList, NListFn, NodeFn};
+use super::{Nil, Cons, NList, NListFn, NodeFn};
 
 
 
@@ -232,10 +232,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             LA: PeanoInt,
             LR: PeanoInt,
         {
-            const NEW: Self = match (LI::PEANO_WIT, peano::cmp(LA::NEW, LR::NEW)) {
+            const NEW: Self = match (LI::PEANO_WIT, peano::eq(LA::NEW, LR::NEW)) {
                 (PeanoWit::PlusOne(input_te), TypeCmp::Ne(_)) => {
                     let TypeCmp::Eq(output_te) =
-                        peano::cmp(PlusOne::<LA>::NEW, peano::Min::<PlusOne<LA>, LR>::NEW)
+                        peano::eq(PlusOne::<LA>::NEW, peano::Min::<PlusOne<LA>, LR>::NEW)
                     else {
                         concat_panic! {"somehow, LA > LR: ", LA::USIZE, " > ", LR::USIZE}
                     };
@@ -306,13 +306,13 @@ impl<T, L: PeanoInt> NList<T, L> {
             match LA::PEANO_WIT {
                 PeanoWit::Zero(len_te) => len_te
                     .zip(TypeEq::new::<LB>())
-                    .map(AddPeanoFn::NEW)
+                    .map(peano::AddFn::NEW)
                     .map(NListFn::NEW)
                     .to_left(rhs),
                 PeanoWit::PlusOne(len_te) => {
                     let Cons { elem, next, .. } = lhs.coerce_len(len_te).node;
 
-                    let len_te = len_te.zip(TypeEq::new::<LB>()).map(AddPeanoFn::NEW);
+                    let len_te = len_te.zip(TypeEq::new::<LB>()).map(peano::AddFn::NEW);
 
                     NList::cons_sub(elem, inner(next, rhs), len_te)
                 }

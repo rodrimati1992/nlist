@@ -17,7 +17,9 @@ use crate::peano::{
 ////////////////////////////////////////////////////////////////////////////////
 
 typewit::type_fn! {
-    struct NListFn<T>;
+    /// Type-level function (`typewit::TypeFn` implementor)
+    /// from `L` to `NList<T, L>`
+    pub struct NListFn<T>;
 
     impl<L: PeanoInt> L => NList<T, L>;
 }
@@ -32,18 +34,6 @@ typewit::type_fn! {
     struct ConsListFn<T>;
 
     impl<L: PeanoInt> L => NList<T, PlusOne<L>>;
-}
-
-typewit::type_fn! {
-    struct AddPeanoFn;
-
-    impl<L1: PeanoInt, L2: PeanoInt> (L1, L2) => peano::Add<L1, L2>;
-}
-
-typewit::type_fn! {
-    struct MulPeanoFn;
-
-    impl<L1: PeanoInt, L2: PeanoInt> (L1, L2) => peano::Mul<L1, L2>;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -281,7 +271,7 @@ where
     L2: PeanoInt,
 {
     fn eq(&self, rhs: &NList<U, L2>) -> bool {
-        let TypeCmp::Eq(te_len) = peano::cmp(L::NEW, L2::NEW) else {
+        let TypeCmp::Eq(te_len) = peano::eq(L::NEW, L2::NEW) else {
             return false;
         };
 
@@ -819,11 +809,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// use nlist::typewit::TypeCmp;
     /// 
     /// pub const fn make_list<L: PeanoInt>() -> NList<usize, L> {
-    ///     if let TypeCmp::Eq(len3_te) = peano::cmp(peano!(3), L::NEW) {
+    ///     if let TypeCmp::Eq(len3_te) = peano::eq(peano!(3), L::NEW) {
     ///         // len3_te is a proof that `Peano!(3) == L`
     ///         // which allows us to coerce `NList<T, Peano!(3)>` to `NList<T, L>`
     ///         nlist![3, 5, 8].coerce_len(len3_te)
-    ///     } else if let TypeCmp::Eq(len5_te) = peano::cmp(peano!(5), L::NEW) {
+    ///     } else if let TypeCmp::Eq(len5_te) = peano::eq(peano!(5), L::NEW) {
     ///         // len5_te is a proof that `Peano!(5) == L`
     ///         nlist![3, 5, 8, 13, 21].coerce_len(len5_te)
     ///     } else {
