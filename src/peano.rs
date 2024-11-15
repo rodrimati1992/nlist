@@ -170,6 +170,10 @@ pub trait PeanoInt:
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt>: PeanoCmpWit<L = Self, R = R>;
 
+    #[doc(hidden)]
+    #[cfg(feature = "proofs")]
+    type __PairOfPeanosProofs<R: PeanoInt>: PeanoCmpProofs<L = Self, R = R>;
+
     /// Evaluates to `Then` if `Self == Zero`, evaluates to `Else` if `Self == PlusOne<_>`
     /// 
     /// # Example
@@ -344,6 +348,10 @@ impl PeanoInt for Zero {
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
 
+    #[doc(hidden)]
+    #[cfg(feature = "proofs")]
+    type __PairOfPeanosProofs<R: PeanoInt> = PairOfPeanos<Self, R>;
+
     type IfZero<Then, Else> = Then;
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Then;
@@ -373,6 +381,10 @@ where
 
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
+
+    #[doc(hidden)]
+    #[cfg(feature = "proofs")]
+    type __PairOfPeanosProofs<R: PeanoInt> = PairOfPeanos<Self, R>;
 
     type IfZero<Then, Else> = Else;
 
@@ -459,43 +471,19 @@ pub enum PeanoWit<L: PeanoInt> {
     Zero(TypeEq<L, Zero>),
 }
 
-mod peano_cmp_wit {
-    use super::*;
+mod pair_of_peanos;
 
-    pub struct PairOfPeanos<L: PeanoInt, R: PeanoInt>(PhantomData<(fn() -> L, fn() -> R)>);
+use self::pair_of_peanos::{PairOfPeanos, PeanoCmpWit};
 
-    pub trait PeanoCmpWit {
-        type L: PeanoInt;
-        type R: PeanoInt;
+#[cfg(not(feature = "proofs"))]
+use self::pair_of_peanos::PairOfPeanos_;
 
-        const EQ_WIT: TypeCmp<Self::L, Self::R>;
-    }
+#[cfg(feature = "proofs")]
+pub mod proofs;
 
-    impl<R: PeanoInt> PeanoCmpWit for PairOfPeanos<Zero, R> {
-        type L = Zero;
-        type R = R;
+#[cfg(feature = "proofs")]
+use self::proofs::{PeanoCmpProofs, PairOfPeanos_};
 
-        const EQ_WIT: TypeCmp<Zero, R> = match R::PEANO_WIT {
-            PeanoWit::Zero(r_te) => TypeCmp::Eq(r_te.flip()),
-            PeanoWit::PlusOne(r_te) => TypeCmp::Ne(zero_one_inequality().join_right(r_te.flip())),
-        };
-    }
-
-    impl<L: PeanoInt, R: PeanoInt> PeanoCmpWit for PairOfPeanos<PlusOne<L>, R> {
-        type L = PlusOne<L>;
-        type R = R;
-
-        const EQ_WIT: TypeCmp<PlusOne<L>, R> = match R::PEANO_WIT {
-            PeanoWit::Zero(r_te) => {
-                TypeCmp::Ne(zero_one_inequality().flip().join_right(r_te.flip()))
-            }
-            PeanoWit::PlusOne(r_te) => <L as PeanoInt>::__PairOfPeanos::<R::SubOneSat>::EQ_WIT
-                .map(PlusOneFn)
-                .join_right(r_te.flip()),
-        };
-    }
-}
-use peano_cmp_wit::{PairOfPeanos, PeanoCmpWit};
 
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -514,7 +502,7 @@ where
     L: PeanoInt,
     R: PeanoInt,
 {
-    <L as PeanoInt>::__PairOfPeanos::<R>::EQ_WIT
+    PairOfPeanos_::<L, R>::EQ_WIT
 }
 
 /// Returns a [`TypeCmp`] proof of whether `L <= R` is true.
@@ -525,8 +513,6 @@ where
 {
     self::eq(PeanoInt::NEW, PeanoInt::NEW)
 }
-
-
 
 
 
