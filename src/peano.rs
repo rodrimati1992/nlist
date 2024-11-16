@@ -10,7 +10,7 @@ use core::{
 };
 
 
-use typewit::{TypeCmp, TypeEq, TypeNe, TypeFn};
+use typewit::{TypeCmp, TypeEq, TypeNe};
 
 mod from_const;
 
@@ -394,7 +394,7 @@ where
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
 
-    type Mul<Rhs: PeanoInt> = Add<Rhs, Mul<T, Rhs>>;
+    type Mul<Rhs: PeanoInt> = Add<Mul<T, Rhs>, Rhs>;
 
     type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
 
