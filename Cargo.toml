@@ -2,7 +2,7 @@
 name = "nlist"
 version = "0.0.4"
 authors = ["rodrimati1992 <rodrimatt1985@gmail.com>"]
-rust-version = "1.79.0"
+rust-version = "1.83.0"
 edition = "2021"
 license = "Zlib"
 description = "inline-allocated list with statically tracked length"
@@ -24,8 +24,14 @@ default = ["alloc", "proofs"]
 alloc = ["typewit/alloc"]
 proofs = []
 
+[dependencies.konst]
+version = "0.3.11"
+features = ["rust_1_83"]
+default-features = false
+
 [dependencies.typewit]
 version = "1.8"
+features = ["mut_refs"]
 default-features = false
 
 [dependencies.const_panic]

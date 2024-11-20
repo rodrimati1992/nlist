@@ -1,4 +1,7 @@
+use konst::destructure;
+
 use typewit::{TypeCmp, TypeEq};
+
 
 use core::{
     cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
@@ -454,7 +457,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// assert_eq!(list_c.head_mut(), &mut 8);
     ///
     /// ```
-    pub fn head_mut(&mut self) -> &mut T {
+    pub const fn head_mut(&mut self) -> &mut T {
         &mut self.node.elem
     }
 
@@ -517,7 +520,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// assert_eq!(list_c.tail_mut(), &mut nlist![5, 3]);
     ///
     /// ```
-    pub fn tail_mut(&mut self) -> &mut NList<T, L> {
+    pub const fn tail_mut(&mut self) -> &mut NList<T, L> {
         &mut self.node.next
     }
 
@@ -582,7 +585,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// assert_eq!(list_c.split_head_mut(), (&mut 8, &mut nlist![5, 3]));
     ///
     /// ```
-    pub fn split_head_mut(&mut self) -> (&mut T, &mut NList<T, L>) {
+    pub const fn split_head_mut(&mut self) -> (&mut T, &mut NList<T, L>) {
         let Cons { elem, next, .. } = &mut self.node;
 
         (elem, next)
@@ -605,8 +608,11 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// assert_eq!(list_c.into_split_head(), (8, nlist![5, 3]));
     ///
     /// ```
-    pub fn into_split_head(self) -> (T, NList<T, L>) {
-        (self.node.elem, self.node.next)
+    pub const fn into_split_head(self) -> (T, NList<T, L>) {
+        destructure!{Self{node} = self}
+        destructure!{Cons{elem, next, len_te: _} = node}
+
+        (elem, next)
     }
 }
 
@@ -782,7 +788,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     /// 
     /// [`Copy`]: core::marker::Copy
-    pub fn each_mut(&mut self) -> NList<&mut T, L> {
+    pub const fn each_mut(&mut self) -> NList<&mut T, L> {
         match L::PEANO_WIT {
             PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
 
@@ -871,7 +877,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Given a proof that `L == L2`, coerces `&mut NList<T, L>` to `&mut NList<T, L2>`
-    pub fn as_mut_coerce_len<L2>(&mut self, len_te: TypeEq<L, L2>) -> &mut NList<T, L2>
+    pub const fn as_mut_coerce_len<L2>(&mut self, len_te: TypeEq<L, L2>) -> &mut NList<T, L2>
     where
         L2: PeanoInt,
     {

@@ -1,4 +1,7 @@
 use const_panic::concat_panic;
+
+use konst::destructure;
+
 use typewit::{TypeCmp, TypeEq};
 
 #[allow(unused_imports)]
@@ -204,7 +207,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// assert_eq!(list.reverse(), nlist![13, 8, 5, 3]);
     ///
     /// ```
-    pub fn reverse(self) -> NList<T, L> {
+    pub const fn reverse(self) -> NList<T, L> {
         enum ReverseState<T, LI, LA, LR>
         where
             LI: PeanoInt,
@@ -222,6 +225,7 @@ impl<T, L: PeanoInt> NList<T, L> {
                 >,
             },
             Finished {
+                input_te: TypeEq<NList<T, LI>, NList<T, Zero>>,
                 output_te: TypeEq<NList<T, LA>, NList<T, LR>>,
             },
         }
@@ -245,14 +249,15 @@ impl<T, L: PeanoInt> NList<T, L> {
                         output_te: output_te.map(NListFn::NEW),
                     }
                 }
-                (PeanoWit::Zero(_), TypeCmp::Eq(output_te)) => ReverseState::Finished {
+                (PeanoWit::Zero(input_te), TypeCmp::Eq(output_te)) => ReverseState::Finished {
+                    input_te: input_te.map(NListFn::NEW),
                     output_te: output_te.map(NListFn::NEW),
                 },
                 _ => concat_panic! {"somehow, ", LI::USIZE, " + ", LA::USIZE, "!=", LR::USIZE},
             };
         }
 
-        fn inner<T, LI, LA, LR>(input: NList<T, LI>, output: NList<T, LA>) -> NList<T, LR>
+        const fn inner<T, LI, LA, LR>(input: NList<T, LI>, output: NList<T, LA>) -> NList<T, LR>
         where
             LI: PeanoInt,
             LA: PeanoInt,
@@ -263,18 +268,23 @@ impl<T, L: PeanoInt> NList<T, L> {
                     input_te,
                     output_te,
                 } => {
-                    let (elem, tail) = input_te.to_right(input).into_split_head();
+                    konst::destructure!{(elem, tail) = input_te.to_right(input).into_split_head()}
 
                     inner(tail, output_te.to_right(NList::cons(elem, output)))
                 }
-                ReverseState::Finished { output_te, .. } => output_te.to_right(output),
+                ReverseState::Finished { input_te, output_te } => {
+                    // this cast fixes "destructor cannot be evaluated at compile-time" error
+                    _ = input_te.to_right(input);
+
+                    output_te.to_right(output)
+                },
             }
         }
 
         match L::PEANO_WIT {
             PeanoWit::Zero { .. } => self,
             PeanoWit::PlusOne(len_te) => {
-                let (elem, tail) = self.coerce_len(len_te).into_split_head();
+                konst::destructure!{(elem, tail) = self.coerce_len(len_te).into_split_head()}
 
                 inner(tail, NList::cons(elem, NList::nil()))
             }
@@ -294,23 +304,28 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// assert_eq!(first.concat(second), nlist![3, 5, 8, 13, 21, 34]);
     ///
     /// ```
-    pub fn concat<L2>(self, other: NList<T, L2>) -> NList<T, peano::Add<L, L2>>
+    pub const fn concat<L2>(self, other: NList<T, L2>) -> NList<T, peano::Add<L, L2>>
     where
         L2: PeanoInt,
     {
-        fn inner<T, LA, LB>(lhs: NList<T, LA>, rhs: NList<T, LB>) -> NList<T, peano::Add<LA, LB>>
+        const fn inner<T, LA, LB>(lhs: NList<T, LA>, rhs: NList<T, LB>) -> NList<T, peano::Add<LA, LB>>
         where
             LA: PeanoInt,
             LB: PeanoInt,
         {
             match LA::PEANO_WIT {
-                PeanoWit::Zero(len_te) => len_te
+                PeanoWit::Zero(len_te) => {
+                    // this cast fixes "destructor cannot be evaluated at compile-time" error
+                    _ = lhs.coerce_len(len_te);
+
+                    len_te
                     .zip(TypeEq::new::<LB>())
                     .map(peano::AddFn::NEW)
                     .map(NListFn::NEW)
-                    .to_left(rhs),
+                    .to_left(rhs)
+                }
                 PeanoWit::PlusOne(len_te) => {
-                    let Cons { elem, next, .. } = lhs.coerce_len(len_te).node;
+                    destructure!{(elem, next) = lhs.coerce_len(len_te).into_split_head()}
 
                     let len_te = len_te.zip(TypeEq::new::<LB>()).map(peano::AddFn::NEW);
 
@@ -335,18 +350,24 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// assert_eq!(first.zip(second), nlist![(3, 13), (5, 21), (8, 34)]);
     ///
     /// ```
-    pub fn zip<U>(self, other: NList<U, L>) -> NList<(T, U), L> {
-        fn inner<T, U, L>(lhs: NList<T, L>, rhs: NList<U, L>) -> NList<(T, U), L>
+    pub const fn zip<U>(self, other: NList<U, L>) -> NList<(T, U), L> {
+        const fn inner<T, U, L>(lhs: NList<T, L>, rhs: NList<U, L>) -> NList<(T, U), L>
         where
             L: PeanoInt,
         {
             match L::PEANO_WIT {
-                PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
-                PeanoWit::PlusOne(len_te) => {
-                    let lhs = len_te.map(NodeFn::NEW).to_right(lhs.node);
-                    let rhs = len_te.map(NodeFn::NEW).to_right(rhs.node);
+                PeanoWit::Zero(len_te) => {
+                    // these casts fix "destructor cannot be evaluated at compile-time" error
+                    _ = lhs.coerce_len(len_te);
+                    _ = rhs.coerce_len(len_te);
 
-                    NList::cons_sub((lhs.elem, rhs.elem), inner(lhs.next, rhs.next), len_te)
+                    NList::nil_sub(len_te)
+                },
+                PeanoWit::PlusOne(len_te) => {
+                    destructure!{(lhs_elem, lhs_next) = lhs.coerce_len(len_te).into_split_head()}
+                    destructure!{(rhs_elem, rhs_next) = rhs.coerce_len(len_te).into_split_head()}
+
+                    NList::cons_sub((lhs_elem, rhs_elem), inner(lhs_next, rhs_next), len_te)
                 }
             }
         }
