@@ -1,4 +1,5 @@
 use const_panic::concat_panic;
+use konst::destructure;
 use typewit::{TypeCmp, TypeEq};
 
 use super::NList;
@@ -74,7 +75,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// }
     /// ```
     ///
-    pub fn split_at<At>(self) -> (NList<T, At>, NList<T, L::SubSat<At>>)
+    pub const fn split_at<At>(self) -> (NList<T, At>, NList<T, L::SubSat<At>>)
     where
         At: PeanoInt<Min<L> = At>,
     {
@@ -129,7 +130,7 @@ impl<T, L: PeanoInt> NList<T, L> {
             };
         }
 
-        fn inner<T, L, At, Rem>(list: NList<T, L>) -> (NList<T, At>, NList<T, Rem>)
+        const fn inner<T, L, At, Rem>(list: NList<T, L>) -> (NList<T, At>, NList<T, Rem>)
         where
             L: PeanoInt,
             At: PeanoInt,
@@ -141,9 +142,10 @@ impl<T, L: PeanoInt> NList<T, L> {
                     at_te,
                     rem_te,
                 } => {
-                    let (head, tail) = list.coerce_len(input_te).into_split_head();
+                    destructure!{(head, tail) = list.coerce_len(input_te).into_split_head()}
 
-                    let (prefix, suffix) = inner(tail);
+                    destructure!{(prefix, suffix) = inner(tail)}
+
                     (
                         NList::cons_sub(head, prefix, at_te),
                         suffix.coerce_len(rem_te),

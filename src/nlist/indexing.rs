@@ -58,7 +58,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// assert_eq!(list.get_mut(4), None);
     ///
     /// ```
-    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+    pub const fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         match L::PEANO_WIT {
             PeanoWit::Zero { .. } => None,
             PeanoWit::PlusOne(len_te) => {
@@ -126,12 +126,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     ///
     /// ```
-    pub fn index_mut<I>(&mut self) -> &mut T
+    pub const fn index_mut<I>(&mut self) -> &mut T
     where
         I: PeanoInt,
         PlusOne<I>: PeanoInt<Max<L> = L>,
     {
-        fn inner<T, L, At>(list: &mut NList<T, L>, at: At) -> &mut T
+        const fn inner<T, L, At>(list: &mut NList<T, L>, at: At) -> &mut T
         where
             L: PeanoInt,
             At: PeanoInt,
