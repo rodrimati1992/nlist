@@ -1,6 +1,10 @@
 use core::marker::PhantomData;
+use core::mem::ManuallyDrop;
 
 use const_panic::concat_panic;
+
+use konst::destructure;
+
 use typewit::{type_fn, CallFn, TypeCmp, TypeEq};
 
 use super::{NList, NList2D, NListFn};
@@ -12,20 +16,18 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::nlist;
+    /// use nlist::{NList, Peano, nlist};
     ///
-    /// let nested = nlist![
-    ///     nlist![3, 5],
-    ///     nlist![8, 13],
-    ///     nlist![21, 34],
-    /// ];
+    /// const FLATTENED: NList<u32, Peano!(6)> = 
+    ///     nlist![
+    ///         nlist![3, 5],
+    ///         nlist![8, 13],
+    ///         nlist![21, 34],
+    ///     ].flatten();
     ///
-    /// assert_eq!(
-    ///     nested.flatten(),
-    ///     nlist![3, 5, 8, 13, 21, 34],
-    /// );
+    /// assert_eq!(FLATTENED, nlist![3, 5, 8, 13, 21, 34]);
     /// ```
-    pub fn flatten(self) -> NList<T, peano::Mul<L, L2>> {
+    pub const fn flatten(self) -> NList<T, peano::Mul<L, L2>> {
         // The current state of iteration over an NList,
         // as determined by the type arguments.
         //
@@ -44,9 +46,15 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
         {
             Iterating {
                 lsub_wit: PeanoWit<LSub>,
-                state_wit: CallFn<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>, LSub>,
+                // ManuallyDrop is necessary because the compiler doesn't know 
+                // that this is non-Drop
+                state_wit: ManuallyDrop<
+                    CallFn<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>, LSub>
+                >,
             },
             Finished {
+                outer_len: TypeEq<LOuter, Zero>,
+                sub_len: TypeEq<LSub, Zero>,
                 output_te: TypeEq<NList<T, LAcc>, NList<T, LRet>>,
             },
         }
@@ -163,12 +171,14 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
                     FlattenState::Iterating {
                         lsub_wit,
-                        state_wit: sub_te
+                        state_wit: ManuallyDrop::new(
+                            sub_te
                             .project::<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>>()
                             .to_left(IteratingInner {
                                 output_te: output_te.map(NListFn::NEW),
                                 _phantom: PhantomData,
-                            }),
+                            })
+                        ),
                     }
                 }
                 (
@@ -177,7 +187,8 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                     TypeCmp::Ne(_),
                 ) => FlattenState::Iterating {
                     lsub_wit,
-                    state_wit: sub_te
+                    state_wit: ManuallyDrop::new(
+                        sub_te
                         .project::<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>>()
                         .to_left(IteratingOuter {
                             outer_te: outer_te.map(NListFn::NEW),
@@ -185,10 +196,13 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                                 .zip(outer_te)
                                 .map(SubTailLenFn::<LInner>::NEW),
                             _phantom: PhantomData,
-                        }),
+                        })
+                    ),
                 },
-                (PeanoWit::Zero(_), PeanoWit::Zero(_), TypeCmp::Eq(output_te)) => {
+                (PeanoWit::Zero(sub_len), PeanoWit::Zero(outer_len), TypeCmp::Eq(output_te)) => {
                     FlattenState::Finished {
+                        outer_len,
+                        sub_len,
                         output_te: output_te.map(NListFn::NEW),
                     }
                 }
@@ -208,7 +222,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             };
         }
 
-        fn inner<T, LSub, LOuter, LInner, LAcc, LRet>(
+        const fn inner<T, LSub, LOuter, LInner, LAcc, LRet>(
             sub: NList<T, LSub>,
             outer: NList2D<T, LOuter, LInner>,
             output: NList<T, LAcc>,
@@ -228,16 +242,21 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                     let swfn = IteratingWhatFn::<T, LOuter, LInner, LAcc, LRet>::NEW;
                     let cargfn = CallArgsFn::<T, LOuter, LInner, LAcc, LRet>::NEW;
 
-                    let (next_sub, next_outer, next_output): CallFn<
+                    let fn_args: CallFn<
                         CallArgsFn<T, LOuter, LInner, LAcc, LRet>,
                         LSub,
                     > = match lsub_wit {
                         PeanoWit::Zero(zero_wit) => {
+                            // works around "destructor cannot be evaluated at compile-time" error
+                            _ = sub.coerce_len(zero_wit);
+
                             let IteratingOuter {
                                 outer_te, tail_te, ..
-                            } = zero_wit.map(swfn).to_right(state_wit);
+                            } = zero_wit.map(swfn).to_right(ManuallyDrop::into_inner(state_wit));
 
-                            let (newsub, tail) = outer_te.to_right(outer).into_split_head();
+                            destructure!{
+                                (newsub, tail) = outer_te.to_right(outer).into_split_head()
+                            }
 
                             let newsub = newsub.coerce_len(tail_te.flip());
 
@@ -245,9 +264,9 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                         }
                         PeanoWit::PlusOne(one_wit) => {
                             let IteratingInner { output_te, .. } =
-                                one_wit.map(swfn).to_right(state_wit);
+                                one_wit.map(swfn).to_right(ManuallyDrop::into_inner(state_wit));
 
-                            let (elem, tail) = sub.coerce_len(one_wit).into_split_head();
+                            destructure!{(elem, tail) = sub.coerce_len(one_wit).into_split_head()}
 
                             one_wit.map(cargfn).to_left((
                                 tail,
@@ -257,9 +276,17 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                         }
                     };
 
+                    destructure!{(next_sub, next_outer, next_output) = fn_args}
+
                     inner(next_sub, next_outer, next_output)
                 }
-                FlattenState::Finished { output_te, .. } => output_te.to_right(output),
+                FlattenState::Finished { sub_len, outer_len, output_te, .. } => {
+                    // these casts fix "destructor cannot be evaluated at compile-time" error
+                    _ = sub.coerce_len(sub_len);
+                    _ = outer.coerce_len(outer_len);
+
+                    output_te.to_right(output)
+                }
             }
         }
 

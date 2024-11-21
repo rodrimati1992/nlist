@@ -8,6 +8,7 @@ use core::{
     fmt::{self, Debug},
     hash::{Hash, Hasher},
     marker::PhantomData,
+    mem::ManuallyDrop,
 };
 
 #[cfg(feature = "alloc")]
@@ -418,6 +419,15 @@ where
 
 ////////////////////////////////////////////
 
+impl<T, L: PeanoInt> NList<T, L> {
+    /// Gets the first [`Node`] of this `NList` by value.
+    /// 
+    pub const fn into_node(self) -> Node<T, L> {
+        destructure!{Self{node} = self}
+
+        node
+    }
+}
 impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// Returns a reference to the first element of the list
     /// 
@@ -706,15 +716,40 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     /// ```
     ///
-    pub fn into_array<const N: usize>(self) -> [T; N]
+    pub const fn into_array<const N: usize>(self) -> [T; N]
     where
         L: IntoUsize<Usize = Usize<N>>,
     {
-        let mut array = [const { None }; N];
+        let mut array = [const { None::<ManuallyDrop<T>> }; N];
 
-        self.for_each(|i, v| array[i] = Some(v));
+        const fn inner<T, L, const N: usize>(
+            list: NList<T, L>, 
+            index: usize, 
+            out: &mut [Option<ManuallyDrop<T>>; N]
+        ) where
+            L: PeanoInt,
+        {
+            match L::PEANO_WIT {
+                PeanoWit::Zero(len_te) => {
+                    // works around "destructor cannot be evaluated at compile-time" error
+                    _ = list.coerce_len(len_te);
+                }
+                PeanoWit::PlusOne(len_te) => {
+                    destructure!{(elem, next) = list.coerce_len(len_te).into_split_head()}
+                    
+                    out[index] = Some(ManuallyDrop::new(elem));
 
-        array.map(|o| o.expect("for_each should have filled all elements"))
+                    inner(next, index + 1, out)
+                }
+            }
+        }
+
+        inner(self, 0, &mut array);
+
+        konst::array::from_fn!(|i| {
+            let elem = array[i].take().expect("for_each should have filled all elements");
+            ManuallyDrop::into_inner(elem)
+        })
     }
 
     /// Makes a bytewise [`Copy`] of the list, element by element.

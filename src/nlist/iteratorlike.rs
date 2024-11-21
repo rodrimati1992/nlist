@@ -273,7 +273,7 @@ impl<T, L: PeanoInt> NList<T, L> {
                     inner(tail, output_te.to_right(NList::cons(elem, output)))
                 }
                 ReverseState::Finished { input_te, output_te } => {
-                    // this cast fixes "destructor cannot be evaluated at compile-time" error
+                    // works around "destructor cannot be evaluated at compile-time" error
                     _ = input_te.to_right(input);
 
                     output_te.to_right(output)
@@ -315,7 +315,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         {
             match LA::PEANO_WIT {
                 PeanoWit::Zero(len_te) => {
-                    // this cast fixes "destructor cannot be evaluated at compile-time" error
+                    // works around "destructor cannot be evaluated at compile-time" error
                     _ = lhs.coerce_len(len_te);
 
                     len_te
@@ -357,7 +357,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         {
             match L::PEANO_WIT {
                 PeanoWit::Zero(len_te) => {
-                    // these casts fix "destructor cannot be evaluated at compile-time" error
+                    // works around "destructor cannot be evaluated at compile-time" error
                     _ = lhs.coerce_len(len_te);
                     _ = rhs.coerce_len(len_te);
 
