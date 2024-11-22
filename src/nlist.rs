@@ -847,9 +847,10 @@ impl<T, L: PeanoInt> NList<T, L> {
         core::mem::forget(self)
     }
 
-    /// Helper method for dropping `NList` of Copy elements conditionally in a const context.
+    /// Helper method for conditionally consuming `NList` of Copy elements in a 
+    /// const context.
     /// 
-    pub const fn assert_copy(self) -> ManuallyDrop<>
+    pub const fn assert_copy(self) -> ManuallyDrop<Self>
     where
         T: Copy
     {

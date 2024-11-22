@@ -78,6 +78,8 @@ pub use crate::{
 #[doc(hidden)]
 pub mod __ {
     pub use konst::destructure;
+
+    pub use core::primitive::bool;
 }
 
 
