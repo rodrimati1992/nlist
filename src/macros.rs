@@ -1,3 +1,9 @@
+mod internal_macros;
+mod iterator_macros;
+
+
+///////////////////////////////////
+
 /// Constructs an [`NList`](crate::NList) 
 ///
 /// This macro can be used in two ways:
@@ -12,9 +18,9 @@
 /// ```rust
 /// use nlist::{NList, Peano};
 ///
-/// let list: NList<u32, Peano!(4)> = nlist::nlist![3, 5, 8, 13];
+/// const LIST: NList<u32, Peano!(4)> = nlist::nlist![3, 5, 8, 13];
 ///
-/// assert_eq!(list.into_vec(), vec![3, 5, 8, 13]);
+/// assert_eq!(LIST.into_vec(), vec![3, 5, 8, 13]);
 ///
 /// ```
 ///

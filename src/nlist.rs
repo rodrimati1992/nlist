@@ -16,7 +16,7 @@ use alloc::vec::Vec;
 
 use crate::{
     peano::{self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero},
-    receiver::{HktMap, MapReceiver, MapReceiverFn, Receiver, ReceiverWit},
+    receiver::{HktApply, MapReceiverFn, Receiver, ReceiverWit},
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -647,7 +647,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// 
     pub const fn split_head_poly<'a, P>(
         this: P
-    ) -> (HktMap<'a, P::Hkt, T>, HktMap<'a, P::Hkt, NList<T, L>>)
+    ) -> (HktApply<'a, P::Hkt, T>, HktApply<'a, P::Hkt, NList<T, L>>)
     where
         P: Receiver<'a, NList<T, PlusOne<L>>>,
         L: PeanoInt,
@@ -656,7 +656,7 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
             struct SplitHeadFn<'a, T, L: PeanoInt>;
 
             impl<P: Receiver<'a, NList<T, PlusOne<L>>>> P 
-            => (HktMap<'a, P::Hkt, T>, HktMap<'a, P::Hkt, NList<T, L>>)
+            => (HktApply<'a, P::Hkt, T>, HktApply<'a, P::Hkt, NList<T, L>>)
             where
                 T: 'a
         }
@@ -838,13 +838,22 @@ impl<T, L: PeanoInt> NList<T, L> {
         }
     }
 
-    /// Helper method for dropping NList in a const context where because `T: Copy`.
+    /// Helper method for dropping NList in a const context where `T: Copy`.
     /// 
     pub const fn assert_copy_drop(self)
     where
         T: Copy
     {
         core::mem::forget(self)
+    }
+
+    /// Helper method for dropping `NList` of Copy elements conditionally in a const context.
+    /// 
+    pub const fn assert_copy(self) -> ManuallyDrop<>
+    where
+        T: Copy
+    {
+        core::mem::ManuallyDrop::new(self)
     }
 
     /// Gets a list of references to each element of this list.
@@ -996,7 +1005,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     pub const fn coerce_len_poly<'a, P, L2>(
         this: P, 
         len_te: TypeEq<L, L2>
-    ) -> HktMap<'a, P::Hkt, NList<T, L2>>
+    ) -> HktApply<'a, P::Hkt, NList<T, L2>>
     where
         P: Receiver<'a, NList<T, L>>,
         L2: PeanoInt,

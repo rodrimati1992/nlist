@@ -10,24 +10,24 @@ pub trait Receiver<'a, T: 'a>: Sized {
     /// Marker type for abstractly representing values/references/mutable references
     // 
     // WORKAROUND: 
-    // Not using `Map<T> = Self` because it gives bizarre type equality errors 
+    // Not using `Apply<T> = Self` because it gives bizarre type equality errors 
     // in downstream uses.
     // If all the tests pass with this bound:
     // ```
-    // ReceiverHkt<'a, Map<T> = Self>
+    // ReceiverHkt<'a, Apply<T> = Self>
     // ```
     // you can use this bound instead of the current bound
-    type Hkt: ReceiverHkt<'a, Map<T>: Identity<Type = Self>>;
+    type Hkt: ReceiverHkt<'a, Apply<T>: Identity<Type = Self>>;
 }
 
 
 /// Marker trait for abstractly representing values/references/mutable references
 pub trait ReceiverHkt<'a>: Sized {
     /// Maps `X` to different types depending on Self:
-    /// - if `Self == ValueHkt`: `Self::Map<X> == X`
-    /// - if `Self == RefHkt`: `Self::Map<X> == &'a X`
-    /// - if `Self == RefMutHkt`: `Self::Map<X> == &'a mut X`
-    type Map<X: 'a>: 'a + Receiver<'a, X, Hkt = Self>;
+    /// - if `Self == ValueHkt`: `Self::Apply<X> == X`
+    /// - if `Self == RefHkt`: `Self::Apply<X> == &'a X`
+    /// - if `Self == RefMutHkt`: `Self::Apply<X> == &'a mut X`
+    type Apply<X: 'a>: 'a + Receiver<'a, X, Hkt = Self>;
 
     /// Type witness over `ValueHkt`/`RefHkt`/`RefMutHkt`
     const HKT_WIT: HktWit<'a, Self>;
@@ -61,19 +61,19 @@ pub struct RefMutHkt<'a>(PhantomData<fn(&'a ()) -> &'a ()>);
 
 
 impl<'a> ReceiverHkt<'a> for ValueHkt<'a> {
-    type Map<X: 'a> = X;
+    type Apply<X: 'a> = X;
 
     const HKT_WIT: HktWit<'a, Self> = HktWit::Value(TypeEq::NEW);
 }
 
 impl<'a> ReceiverHkt<'a> for RefHkt<'a> {
-    type Map<X: 'a> = &'a X;
+    type Apply<X: 'a> = &'a X;
 
     const HKT_WIT: HktWit<'a, Self> = HktWit::Ref(TypeEq::NEW);
 }
 
 impl<'a> ReceiverHkt<'a> for RefMutHkt<'a> {
-    type Map<X: 'a> = &'a mut X;
+    type Apply<X: 'a> = &'a mut X;
 
     const HKT_WIT: HktWit<'a, Self> = HktWit::RefMut(TypeEq::NEW);
 }
@@ -84,10 +84,10 @@ impl<'a> ReceiverHkt<'a> for RefMutHkt<'a> {
 pub type HktOf<'a, R, T> = <R as Receiver<'a, T>>::Hkt;
 
 /// Maps `H` to different types depending on its value:
-/// - `HktMap<'a, ValueHkt , T> == T`
-/// - `HktMap<'a, RefHkt   , T> == &'a T`
-/// - `HktMap<'a, RefMutHkt, T> == &'a mut T`
-pub type HktMap<'a, H, T> = <H as ReceiverHkt<'a>>::Map<T>;
+/// - `HktApply<'a, ValueHkt , T> == T`
+/// - `HktApply<'a, RefHkt   , T> == &'a T`
+/// - `HktApply<'a, RefMutHkt, T> == &'a mut T`
+pub type HktApply<'a, H, T> = <H as ReceiverHkt<'a>>::Apply<T>;
 
 /// Maps `R`'s `T` type argument to `U`.
 /// 
@@ -95,7 +95,7 @@ pub type HktMap<'a, H, T> = <H as ReceiverHkt<'a>>::Map<T>;
 /// - `T` to `U`
 /// - `&'a T` to `&'a U`
 /// - `&'a mut T` to `&'a mut U`
-pub type MapReceiver<'a, R, T, U> = HktMap<'a, HktOf<'a, R, T>, U>;
+pub type MapReceiver<'a, R, T, U> = HktApply<'a, HktOf<'a, R, T>, U>;
 
 /////////////////////////////////////////////////
 
@@ -140,17 +140,17 @@ where
     /// Constructs this `ReceiverWit`
     pub const NEW: Self = {
 
-        // this `TypeEq` created with the `Map<T>: Identity<Type = Self>` bound
-        // does what the `Map<T> = Self` bound would do if it worked without issues.
-        let identity_te: TypeEq<HktMap<'a, R::Hkt, T>, R> = 
-            <HktMap<'a, R::Hkt, T> as Identity>::TYPE_EQ;
+        // this `TypeEq` created with the `Apply<T>: Identity<Type = Self>` bound
+        // does what the `Apply<T> = Self` bound would do if it worked without issues.
+        let identity_te: TypeEq<HktApply<'a, R::Hkt, T>, R> = 
+            <HktApply<'a, R::Hkt, T> as Identity>::TYPE_EQ;
 
         identity_te
             .map(MapReceiverWitRArgFn::<'a, T>::NEW)
             .to_right(match HktOf::<R, T>::HKT_WIT {
-                HktWit::Value(te) => ReceiverWit::Value(te.map(HktMapFn::<'a, T>::NEW)),
-                HktWit::Ref(te) => ReceiverWit::Ref(te.map(HktMapFn::<'a, T>::NEW)),
-                HktWit::RefMut(te) => ReceiverWit::RefMut(te.map(HktMapFn::<'a, T>::NEW)),
+                HktWit::Value(te) => ReceiverWit::Value(te.map(HktApplyFn::<'a, T>::NEW)),
+                HktWit::Ref(te) => ReceiverWit::Ref(te.map(HktApplyFn::<'a, T>::NEW)),
+                HktWit::RefMut(te) => ReceiverWit::RefMut(te.map(HktApplyFn::<'a, T>::NEW)),
             })
     };
 }
@@ -167,9 +167,9 @@ typewit::type_fn! {
 ////////////////////////////////////////////////////////
 
 typewit::type_fn! {
-    struct HktMapFn<'a, T>;
+    struct HktApplyFn<'a, T>;
 
-    impl<K: ReceiverHkt<'a>> K => K::Map<T>
+    impl<K: ReceiverHkt<'a>> K => K::Apply<T>
     where 
         T: 'a;
 }
