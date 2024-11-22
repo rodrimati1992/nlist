@@ -170,9 +170,6 @@ pub trait PeanoInt:
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt>: PeanoCmpWit<L = Self, R = R>;
 
-    #[doc(hidden)]
-    #[cfg(feature = "proofs")]
-    type __PairOfPeanosProofs<R: PeanoInt>: PeanoCmpProofs<L = Self, R = R>;
 
     /// Evaluates to `Then` if `Self == Zero`, evaluates to `Else` if `Self == PlusOne<_>`
     /// 
@@ -348,10 +345,6 @@ impl PeanoInt for Zero {
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
 
-    #[doc(hidden)]
-    #[cfg(feature = "proofs")]
-    type __PairOfPeanosProofs<R: PeanoInt> = PairOfPeanos<Self, R>;
-
     type IfZero<Then, Else> = Then;
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Then;
@@ -381,10 +374,6 @@ where
 
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
-
-    #[doc(hidden)]
-    #[cfg(feature = "proofs")]
-    type __PairOfPeanosProofs<R: PeanoInt> = PairOfPeanos<Self, R>;
 
     type IfZero<Then, Else> = Else;
 
@@ -473,16 +462,10 @@ pub enum PeanoWit<L: PeanoInt> {
 
 mod pair_of_peanos;
 
-use self::pair_of_peanos::{PairOfPeanos, PeanoCmpWit};
-
-#[cfg(not(feature = "proofs"))]
-use self::pair_of_peanos::PairOfPeanos_;
+use self::pair_of_peanos::{PairOfPeanos, PeanoCmpWit, PairOfPeanos_};
 
 #[cfg(feature = "proofs")]
 pub mod proofs;
-
-#[cfg(feature = "proofs")]
-use self::proofs::{PeanoCmpProofs, PairOfPeanos_};
 
 
 

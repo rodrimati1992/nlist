@@ -2,26 +2,48 @@
 //!
 //! # Example
 //!
+//! ### Splitting and recombining
+//!
+//! This example shows how NLists can be split and recombined in const,
+//! even if the length is generic, 
+//! so long as the length is known to be greater than the split index.
+//!
 //! ```rust
 //! use nlist::{NList, Peano, PeanoInt, nlist, peano};
 //!
-//! fn transform<T, L>(list: NList<T, L>) -> NList<i128, peano::Add<L, Peano!(1)>>
+//! const LIST: NList<u128, Peano!(7)> = transform(nlist![3, 5, 8, 13, 21, 34, 55]);
+//!
+//! assert_eq!(LIST, nlist![21, 34, 55, 6, 10, 16, 26]);
+//!
+//! type SplitIndex = Peano!(4);
+//! const fn transform<L>(
+//!     list: NList<u128, peano::Add<SplitIndex, L>>
+//! ) -> NList<u128, peano::Add<SplitIndex, L>>
 //! where
-//!     T: Into<i128>,
 //!     L: PeanoInt,
 //! {
-//!     list.reverse()
-//!         .map(|x| -> i128 { x.into() })
-//!         .map(|x| x * 10)
-//!         .concat(nlist![0])
+//!     // if we use `let` to destructure instead of `konst::destructure`,
+//!     // we get a "cannot drop in const" error as of Rust 1.83
+//!     konst::destructure!{(mut before, after) = list.split_at::<SplitIndex>()}
+//!     
+//!     let mut array = before.into_array();
+//!     mutate_array(&mut array);
+//!     before = NList::from_array(array);
+//!     
+//!     // math spice: using arithmetic properties to coerce generic lengths
+//!     // 
+//!     // coercing `NList<u128, L - 0>` to `NList<u128, L>`
+//!     after.coerce_len(peano::proofs::sub_identity::<L>())
+//!         .concat(before)
+//!         // coercing `NList<u128, L + SplitIndex>` to `NList<u128, SplitIndex + L>`
+//!         .coerce_len(peano::proofs::commutative_add::<L, SplitIndex>())
 //! }
-//!
-//! let fibb = transform(nlist![3, 5, 8]);
-//! assert_eq!(fibb.into_vec(), vec![80, 50, 30, 0]);
-//!
-//! let powers = transform(nlist![4u8, 9, 25]);
-//! assert_eq!(powers.into_vec(), vec![250, 90, 40, 0]);
-//!
+//! 
+//! 
+//! const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
+//!     *array = konst::array::map_!(*array, |x| x * 2);
+//! }
+//! 
 //! ```
 //!
 //! [inline-allocated list]: crate::NList

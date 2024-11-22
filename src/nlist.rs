@@ -178,23 +178,38 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, nlist};
+    /// use nlist::{NList, Peano, nlist};
     ///
-    /// let nlist = NList::from_array([3, 5, 8, 13, 21]);
+    /// const LIST: NList<u8, Peano!(5)> = NList::from_array([3, 5, 8, 13, 21]);
     ///
-    /// assert_eq!(nlist, nlist![3, 5, 8, 13, 21]);
+    /// assert_eq!(LIST, nlist![3, 5, 8, 13, 21]);
     ///
     /// ```
-    pub fn from_array<const N: usize>(array: [T; N]) -> Self
+    pub const fn from_array<const N: usize>(array: [T; N]) -> Self
     where
         Usize<N>: IntoPeano<Peano = L>,
     {
-        let mut iter = array.into_iter();
+        let mut array = konst::array::map_!(array, |x| Some(ManuallyDrop::new(x)));
 
-        Self::from_fn(|_| {
-            iter.next()
-                .expect("calling iter.next() `L` times shouldn't panic")
-        })
+        const fn inner<T, const N: usize, L>(
+            i: usize, 
+            array: &mut [Option<ManuallyDrop<T>>; N]
+        ) -> NList<T, L> 
+        where
+            L: PeanoInt
+        {
+            match L::PEANO_WIT {
+                PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
+                PeanoWit::PlusOne(len_te) => {
+                    let elem = array[i].take().expect("all elements are only visited once");
+                    let elem = ManuallyDrop::into_inner(elem);
+
+                    NList::cons_sub(elem, inner(i + 1, array), len_te)
+                }
+            }
+        }
+
+        inner(0, &mut array)
     }
 
     /// Alternate constructor for [`NList::nil`],
@@ -746,9 +761,10 @@ impl<T, L: PeanoInt> NList<T, L> {
 
         inner(self, 0, &mut array);
 
-        konst::array::from_fn!(|i| {
-            let elem = array[i].take().expect("for_each should have filled all elements");
-            ManuallyDrop::into_inner(elem)
+        konst::array::map_!(array, |x| {
+            ManuallyDrop::into_inner(
+                x.expect("for_each should have filled all elements")
+            )                
         })
     }
 
