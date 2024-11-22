@@ -20,9 +20,8 @@ include = [
 
 
 [features]
-default = ["alloc", "proofs"]
+default = ["alloc"]
 alloc = ["typewit/alloc"]
-proofs = []
 
 [dependencies.konst]
 version = "0.3.12"

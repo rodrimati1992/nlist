@@ -464,7 +464,6 @@ mod pair_of_peanos;
 
 use self::pair_of_peanos::{PairOfPeanos, PeanoCmpWit, PairOfPeanos_};
 
-#[cfg(feature = "proofs")]
 pub mod proofs;
 
 
