@@ -23,14 +23,14 @@
 //!     L: PeanoInt,
 //! {
 //!     // if we use `let` to destructure instead of `konst::destructure`,
-//!     // we get a "cannot drop in const" error as of Rust 1.83
+//!     // we get a "destructor cannot be evaluated at compile-time" error as of Rust 1.83
 //!     konst::destructure!{(mut before, after) = list.split_at::<SplitIndex>()}
 //!     
 //!     let mut array = before.into_array();
 //!     mutate_array(&mut array);
 //!     before = NList::from_array(array);
 //!     
-//!     // math spice: using arithmetic properties to coerce generic lengths
+//!     // math spice: using arithmetic properties to coerce equal generic lengths
 //!     // 
 //!     // coercing `NList<u128, L - 0>` to `NList<u128, L>`
 //!     after.coerce_len(peano::proofs::sub_identity::<L>())
@@ -39,11 +39,9 @@
 //!         .coerce_len(peano::proofs::commutative_add::<L, SplitIndex>())
 //! }
 //! 
-//! 
 //! const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
 //!     *array = konst::array::map_!(*array, |x| x * 2);
 //! }
-//! 
 //! ```
 //!
 //! [inline-allocated list]: crate::NList
@@ -67,7 +65,19 @@ pub mod peano;
 
 mod nlist;
 
+pub mod receiver;
+
 pub use crate::{
     nlist::*,
     peano::{PeanoInt, PeanoWit, PlusOne, Zero},
 };
+
+
+
+
+#[doc(hidden)]
+pub mod __ {
+    pub use konst::destructure;
+}
+
+

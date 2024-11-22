@@ -53,7 +53,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///         match peano::check_le(At::NEW, L::NEW).eq() {
     ///             Some(in_len_te) => 
     ///                 // `.unwrap_eq()` can only panic if this function has a bug
-    ///                 Some((in_len_te, peano::eq(PInt::NEW, PInt::NEW).unwrap_eq()),
+    ///                 Some((in_len_te, peano::eq(PInt::NEW, PInt::NEW).unwrap_eq())),
     ///             None => None,
     ///         }
     ///     };

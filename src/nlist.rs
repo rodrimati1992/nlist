@@ -14,8 +14,9 @@ use core::{
 #[cfg(feature = "alloc")]
 use alloc::vec::Vec;
 
-use crate::peano::{
-    self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero,
+use crate::{
+    peano::{self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero},
+    receiver::{HktMap, MapReceiver, MapReceiverFn, Receiver, ReceiverWit},
 };
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -639,7 +640,46 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
 
         (elem, next)
     }
+
+    /// Generic version of `split_head` that can take 
+    /// `NList` by value/reference/mutable reference,
+    /// and returns the corresponding pair of (head, tail).
+    /// 
+    pub const fn split_head_poly<'a, P>(
+        this: P
+    ) -> (HktMap<'a, P::Hkt, T>, HktMap<'a, P::Hkt, NList<T, L>>)
+    where
+        P: Receiver<'a, NList<T, PlusOne<L>>>,
+        L: PeanoInt,
+    {
+        typewit::type_fn! {
+            struct SplitHeadFn<'a, T, L: PeanoInt>;
+
+            impl<P: Receiver<'a, NList<T, PlusOne<L>>>> P 
+            => (HktMap<'a, P::Hkt, T>, HktMap<'a, P::Hkt, NList<T, L>>)
+            where
+                T: 'a
+        }
+
+        let func = SplitHeadFn::<'a, T, L>::NEW;
+
+        match ReceiverWit::<'a, P, NList<T, PlusOne<L>>>::NEW {
+            ReceiverWit::Value(te) => {
+                let ret = te.to_right(this).into_split_head();
+                te.map(func).to_left(ret)
+            },
+            ReceiverWit::Ref(te) => {
+                let ret = te.to_right(this).split_head();
+                te.map(func).to_left(ret)
+            },
+            ReceiverWit::RefMut(te) => {
+                let ret = te.to_right(this).split_head_mut();
+                te.map(func).to_left(ret)
+            },
+        }
+    }
 }
+
 
 mod indexing;
 
@@ -798,6 +838,15 @@ impl<T, L: PeanoInt> NList<T, L> {
         }
     }
 
+    /// Helper method for dropping NList in a const context where because `T: Copy`.
+    /// 
+    pub const fn assert_copy_drop(self)
+    where
+        T: Copy
+    {
+        core::mem::forget(self)
+    }
+
     /// Gets a list of references to each element of this list.
     ///
     /// # Example
@@ -854,6 +903,11 @@ impl<T, L: PeanoInt> NList<T, L> {
 
 
 impl<T, L: PeanoInt> NList<T, L> {
+    /// Alternate way to get [`PeanoWit`] for `L`
+    pub const fn len_proof(&self) -> PeanoWit<L> {
+        <L as PeanoInt>::PEANO_WIT
+    }
+
     /// Given a proof that `L == L2`, coerces `NList<T, L>` to `NList<T, L2>`
     /// 
     /// # Example
@@ -934,7 +988,38 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         len_te.map(NListFn::NEW).in_mut().to_right(self)
     }
+
+    /// Generic version of `coerce_len` that can take 
+    /// `NList` by value/reference/mutable reference,
+    /// and returns the corresponding value/reference/mutable of an `NList` with that length.
+    /// 
+    pub const fn coerce_len_poly<'a, P, L2>(
+        this: P, 
+        len_te: TypeEq<L, L2>
+    ) -> HktMap<'a, P::Hkt, NList<T, L2>>
+    where
+        P: Receiver<'a, NList<T, L>>,
+        L2: PeanoInt,
+    {
+        let func = MapReceiverFn::<NList<T, L>, NList<T, L2>>::NEW;
+
+        match ReceiverWit::<'a, P, NList<T, L>>::NEW {
+            ReceiverWit::Value(te) => {
+                let ret = te.to_right(this).coerce_len(len_te);
+                te.map(func).to_left(ret)
+            },
+            ReceiverWit::Ref(te) => {
+                let ret = te.to_right(this).as_coerce_len(len_te);
+                te.map(func).to_left(ret)
+            },
+            ReceiverWit::RefMut(te) => {
+                let ret = te.to_right(this).as_mut_coerce_len(len_te);
+                te.map(func).to_left(ret)
+            },
+        }
+    }
 }
+
 
 impl<T, L, const N: usize> From<NList<T, L>> for [T; N]
 where
