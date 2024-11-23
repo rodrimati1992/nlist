@@ -4,6 +4,9 @@ macro_rules! fn_equivalent {(
     fn_name = $fn_name:literal
     fn_ret  = $fn_ret:literal
     closure_ret = $closure_ret:literal
+    $(additional_generics=$additional_generics:literal)?
+    $(additional_params=$additional_params:literal)?
+    $(additional_args=$additional_args:literal)?
 ) => {concat!("
 This macro acts like a function with this signature:
 
@@ -13,7 +16,9 @@ use nlist::{NList, PeanoInt};
 use nlist::receiver::Receiver;
 # use nlist::receiver::HktApply;
 
-fn ", $fn_name,"<'a, P, T, L, F, U, Hkt>(list: P, func: F) -> ", $fn_ret,"
+fn ", $fn_name,"<'a, P, T, L, F",
+    $(", ", $additional_generics,)?
+">(list: P ", $(", ", $additional_params,)? ", func: F) -> ", $fn_ret,"
 where
     P: Receiver<'a, NList<T, L>>,
     L: PeanoInt,
@@ -25,9 +30,8 @@ where
         # HktApply<'a, P::Hkt, T>, 
         # HktApply<'a, P::Hkt, NList<T, L::SubOneSat>>
     ) -> ", $closure_ret, "
-# { nlist::", $fn_name,"!{ list, |a, b| { func(a, b) }} }
+# { nlist::", $fn_name,"!{ list ", $(", ", $additional_args,)? ", |a, b| { func(a, b) }} }
 ```
-
 
 The closure parameters depend on the value of `P`:
 - If `P == NList<T, L>`: the parameters are `(T, Nlist<T, L::SubOneSat>)`
@@ -234,12 +238,118 @@ macro_rules! __rec_any {
 
 //////////////////////////////////////////////////////////////////////////////
 
+/// Helper for writing const fn equivalents of [`NList::find_map`](crate::NList::find_map)
+/// 
+#[doc = fn_equivalent!(
+    fn_name = "rec_find_map"
+    fn_ret  = "Option<U>"
+    closure_ret = "Option<U>"
+    additional_generics="U"
+)]
+#[doc = early_termination_warning!()]
+/// 
+/// # Example
+/// 
+/// ### By reference
+/// 
+/// Example that takes an `NList` by reference
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// const EMPTY: Option<i128> = finder(&nlist![]);
+/// assert!(EMPTY.is_none());
+///
+/// const FOUND: Option<i128> = finder(&nlist![3, 5, 9]);
+/// assert_eq!(FOUND, Some(1));
+/// 
+/// 
+/// const fn finder<L>(list: &NList<u128, L>) -> Option<i128>
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_find_map!{list, |elem: &u128, next| {
+///         if *elem % 4 == 1 {
+///             Some((*elem / 4) as i128)
+///         } else {
+///             finder(next)
+///         }
+///     }}
+/// }
+/// ```
+/// 
+/// ### By value
+/// 
+/// Example that takes an `NList` of `Copy` elements by value
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// use std::mem::ManuallyDrop as MD;
+/// 
+/// const EMPTY: Option<u8> = finder(nlist![]);
+/// assert!(EMPTY.is_none());
+///
+/// const FOUND: Option<u8> = finder(nlist![3, 5, 9]);
+/// assert_eq!(FOUND, Some(1));
+/// 
+/// 
+/// const fn finder<L>(list: NList<u128, L>) -> Option<u8>
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_find_map!{list, |elem: u128, next| {
+///         // works around "destructor cannot be evaluated at compile-time" error
+///         let next = next.assert_copy();
+///
+///         if elem % 4 == 1 {
+///             Some((elem % 4) as u8)
+///         } else {
+///             finder(MD::into_inner(next))
+///         }
+///     }}
+/// }
+/// ```
+/// 
+/// 
+#[macro_export]
+macro_rules! rec_find_map {
+    ($in_list:expr, $($func:tt)*) => {
+        $crate::__parse_closure_2_args!{__rec_find_map ($in_list,) $($func)*}
+    }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __rec_find_map {
+    (
+        $in_list:expr, 
+
+        |$elem:tt: $elem_ty:ty, $next:tt: $next_ty:ty| -> $ret_ty:ty $block:block
+    ) => {
+        $crate::__rec_shared!{
+            $in_list,
+            len_te,
+            || None,
+            |$elem: $elem_ty, $next: $next_ty| {
+                let ret: $ret_ty = $block;
+                let _: Option<_> = ret;
+
+                ret
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
 /// Helper for writing const fn equivalents of [`NList::map`](crate::NList::map)
 /// 
 #[doc = fn_equivalent!(
     fn_name = "rec_map"
     fn_ret  = "NList<U, L>"
     closure_ret = "(U, NList<U, L::SubOneSat>)"
+    additional_generics="U"
 )]
 /// 
 /// # Example
@@ -311,15 +421,178 @@ macro_rules! __rec_map {
 
 //////////////////////////////////////////////////////////////////////////////
 
-// - any
-// - find
-// - find_map
-// - fold
-// - for_each
-// - position
-// - rfind
-// - rfind_map
-// - rposition
+/// Helper for writing const fn equivalents of [`NList::for_each`](crate::NList::for_each)
+/// 
+#[doc = fn_equivalent!(
+    fn_name = "rec_for_each"
+    fn_ret  = "()"
+    closure_ret = "()"
+)]
+/// 
+/// # Example
+/// 
+/// ### By value
+/// 
+/// Example that takes an `NList` by value
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// const SUM: u128 = {
+///     let mut sum = 0;
+///     add_to(&mut sum, nlist![3, 5, 8]);
+///     sum
+/// };
+/// 
+/// assert_eq!(SUM, 16);
+/// 
+/// const fn add_to<L>(mutator: &mut u128, list: NList<u128, L>)
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_for_each!{list, |elem: u128, next| { 
+///         *mutator += elem;
+///         add_to(mutator, next)
+///     }}
+/// }
+/// ```
+/// 
+/// ### By reference
+/// 
+/// Example that takes an `NList` by reference
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// const SUM: u128 = {
+///     let mut sum = 0;
+///     add_to(&mut sum, &nlist![3, 5, 8]);
+///     sum
+/// };
+/// 
+/// assert_eq!(SUM, 16);
+/// 
+/// const fn add_to<L>(mutator: &mut u128, list: &NList<u128, L>)
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_for_each!{list, |elem: &u128, next| { 
+///         *mutator += *elem;
+///         add_to(mutator, next)
+///     }}
+/// }
+/// ```
+#[macro_export]
+macro_rules! rec_for_each {
+    ($in_list:expr, $($func:tt)*) => {
+        $crate::__parse_closure_2_args!{__rec_for_each ($in_list,) $($func)*}
+    }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __rec_for_each {
+    (
+        $in_list:expr, 
+
+        |$elem:tt: $elem_ty:ty, $next:tt: $next_ty:ty| -> $ret_ty:ty $block:block
+    ) => {
+        $crate::__rec_shared!{
+            $in_list,
+            len_te,
+            || (),
+            |$elem: $elem_ty, $next: $next_ty| {
+                let ret: $ret_ty = $block;
+                let _: () = ret;
+            }
+        }
+    }
+}
+
+//////////////////////////////////////////////////////////////////////////////
+
+/// Helper for writing const fn equivalents of [`NList::fold`](crate::NList::fold)
+/// 
+#[doc = fn_equivalent!(
+    fn_name = "rec_fold"
+    fn_ret  = "U"
+    closure_ret = "U"
+    additional_generics="U"
+    additional_params="accum: U"
+    additional_args="accum"
+)]
+/// 
+/// # Accumulator Argument
+/// 
+/// The `accum` argument is only evaluated if the list is empty,
+/// which means that you can pass it by value and still use it in the passed in closure.
+/// 
+/// # Example
+/// 
+/// ### By value
+/// 
+/// Example that takes an `NList` by value
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// const SUM: u128 = add_up(0, nlist![1, 2, 3, 4, 5]);
+/// 
+/// assert_eq!(SUM, 15);
+/// 
+/// const fn add_up<L>(sum: u128, list: NList<u128, L>) -> u128
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_fold!{list, sum, |elem: u128, next| add_up(sum + elem, next)}
+/// }
+/// ```
+/// 
+/// ### By reference
+/// 
+/// Example that takes an `NList` by reference
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// 
+/// const SUM: u128 = add_up(0, &nlist![3, 5, 8]);
+/// 
+/// assert_eq!(SUM, 16);
+/// 
+/// const fn add_up<L>(sum: u128, list: &NList<u128, L>) -> u128
+/// where
+///     L: PeanoInt
+/// {
+///     nlist::rec_fold!{list, sum, |elem: &u128, next| add_up(sum + *elem, next)}
+/// }
+/// ```
+#[macro_export]
+macro_rules! rec_fold {
+    ($in_list:expr, $accum:expr, $($func:tt)*) => {
+        $crate::__parse_closure_2_args!{__rec_fold ($in_list, $accum,) $($func)*}
+    }
+}
+
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __rec_fold {
+    (
+        $in_list:expr, 
+        $accum:expr,
+
+        |$elem:tt: $elem_ty:ty, $next:tt: $next_ty:ty| -> $ret_ty:ty $block:block
+    ) => {
+        $crate::__rec_shared!{
+            $in_list,
+            len_te,
+            || $accum,
+            |$elem: $elem_ty, $next: $next_ty| {
+                let ret: $ret_ty = $block;
+                ret
+            }
+        }
+    }
+}
 
 //////////////////////////////////////////////////////////////////////////////
 
