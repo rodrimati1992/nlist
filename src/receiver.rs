@@ -21,7 +21,7 @@ pub trait Receiver<'a, T: 'a>: Sized {
 }
 
 
-/// Marker trait for abstractly representing values/references/mutable references
+/// Marker trait for `ValueHkt`/`RefHkt`/`RefMutHkt` marker types
 pub trait ReceiverHkt<'a>: Sized {
     /// Maps `X` to different types depending on Self:
     /// - if `Self == ValueHkt`: `Self::Apply<X> == X`
@@ -50,13 +50,13 @@ impl<'a, T: 'a> Receiver<'a, T> for &'a mut T {
 
 /////////////////////////////////////////////////
 
-/// Marker type for `T`
+/// Marker type for an abstract `T`
 pub struct ValueHkt<'a>(PhantomData<fn(&'a ()) -> &'a ()>);
 
-/// Marker type for `&T`
+/// Marker type for an abstract `&T`
 pub struct RefHkt<'a>(PhantomData<fn(&'a ()) -> &'a ()>);
 
-/// Marker type for `&mut T`
+/// Marker type for an abstract `&mut T`
 pub struct RefMutHkt<'a>(PhantomData<fn(&'a ()) -> &'a ()>);
 
 
@@ -80,7 +80,7 @@ impl<'a> ReceiverHkt<'a> for RefMutHkt<'a> {
 
 /////////////////////////////////////////////////
 
-/// Gets the [`ReceiverHkt`] of `R`
+/// Gets the [`Receiver::Hkt`] of `R`
 pub type HktOf<'a, R, T> = <R as Receiver<'a, T>>::Hkt;
 
 /// Maps `H` to different types depending on its value:
@@ -89,12 +89,12 @@ pub type HktOf<'a, R, T> = <R as Receiver<'a, T>>::Hkt;
 /// - `HktApply<'a, RefMutHkt, T> == &'a mut T`
 pub type HktApply<'a, H, T> = <H as ReceiverHkt<'a>>::Apply<T>;
 
-/// Maps `R`'s `T` type argument to `U`.
+/// Maps the `T` type argument of `R:`[`Receiver`]`<'a, T>` to `U`.
 /// 
-/// Maps `R` from:
-/// - `T` to `U`
-/// - `&'a T` to `&'a U`
-/// - `&'a mut T` to `&'a mut U`
+/// The different ways this type alias can be used:
+/// - `MapReceiver<'a, T        , T, U> == U`
+/// - `MapReceiver<'a, &'a T    , T, U> == &'a U`
+/// - `MapReceiver<'a, &'a mut T, T, U> == &'a mut U`
 pub type MapReceiver<'a, R, T, U> = HktApply<'a, HktOf<'a, R, T>, U>;
 
 /////////////////////////////////////////////////

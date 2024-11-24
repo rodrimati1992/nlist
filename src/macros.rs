@@ -1,4 +1,5 @@
 mod internal_macros;
+mod from_fn_macro;
 mod iterator_macros;
 
 

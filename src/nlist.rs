@@ -15,7 +15,7 @@ use core::{
 use alloc::vec::Vec;
 
 use crate::{
-    peano::{self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero},
+    peano::{self, FromUsize, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, Usize, Zero},
     receiver::{HktApply, MapReceiverFn, Receiver, ReceiverWit},
 };
 
@@ -189,6 +189,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     pub const fn from_array<const N: usize>(array: [T; N]) -> Self
     where
         Usize<N>: IntoPeano<Peano = L>,
+        L: IntoUsize<Usize = Usize<N>>,
     {
         let mut array = konst::array::map_!(array, |x| Some(ManuallyDrop::new(x)));
 
@@ -1040,12 +1041,11 @@ where
     }
 }
 
-impl<T, L, const N: usize> From<[T; N]> for NList<T, L>
+impl<T, const N: usize> From<[T; N]> for NList<T, FromUsize<N>>
 where
-    L: PeanoInt,
-    Usize<N>: IntoPeano<Peano = L>,
+    Usize<N>: IntoPeano,
 {
-    fn from(list: [T; N]) -> NList<T, L> {
+    fn from(list: [T; N]) -> NList<T, FromUsize<N>> {
         NList::from_array(list)
     }
 }

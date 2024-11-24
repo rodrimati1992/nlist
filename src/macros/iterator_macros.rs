@@ -23,7 +23,7 @@ where
     P: Receiver<'a, NList<T, L>>,
     L: PeanoInt,
     T: 'a,
-    F: Fn(
+    F: FnOnce(
         # /*
         ... // parameter types explained below
         # */
