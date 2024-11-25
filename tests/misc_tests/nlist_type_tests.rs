@@ -1,0 +1,6 @@
+mod nlist_constructor_tests;
+mod nlist_getters_tests;
+mod nlist_indexing_and_recombining_tests;
+mod nlist_iterator_methods_tests;
+mod nlist_len_methods_tests;
+mod nlist_misc_tests;

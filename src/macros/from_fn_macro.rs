@@ -30,7 +30,7 @@
 /// # type L = nlist::Peano!(4);
 /// const LIST: NList<T, L> = NList::from_array(konst::array::from_fn_!(some_closure_code));
 /// ```
-/// which works for small lengths (those that impl the [`IntoPeano`] trait)
+/// Caveat: this only works for small lengths (those that impl the [`IntoPeano`] trait)
 /// 
 /// # Example
 /// 
@@ -53,6 +53,7 @@
 /// [`NList::from_array`]: crate::NList::from_array
 /// [`NList::from_fn`]: crate::NList::from_fn
 /// [`IntoPeano`]: crate::peano::IntoPeano
+/// [`konst::array::from_fn_`]: https://docs.rs/konst/latest/konst/array/macro.from_fn_.html
 #[macro_export]
 macro_rules! rec_from_fn {
     ($($closure:tt)*) => {

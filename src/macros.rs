@@ -113,6 +113,6 @@ macro_rules! peano {
 #[macro_export]
 macro_rules! Peano {
     ($expr:expr) => {
-        $crate::peano::FromUsize<$expr>
+        $crate::peano::FromUsize<{$expr}>
     }
 }
