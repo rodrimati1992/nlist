@@ -110,15 +110,31 @@ fn nlist_macro_list_test() {
 
 #[test]
 fn nlist_macro_repeat_test() {
+    const fn repat<T, const N: usize>(val: T) -> NList<T, Peano!(N)>
+    where
+        T: Copy,
+        typewit::const_marker::Usize<N>: nlist::peano::IntoPeano,
+    {
+        nlist![val; N]
+    }
+
     assert_type::<NList<u64, Peano!(3)>>(nlist![3u64; 3]);
 
-    const REPEATED: NList<&str, Peano!(7)> = nlist!["h"; 7];
+    const REPEATED: NList<&str, Peano!(7)> = repat::<_, 7>("h");
     assert_eq!(REPEATED, nlist!["h", "h", "h", "h", "h", "h", "h"]);
 }
 
 #[test]
 fn nlist_macro_repeat_infer_test() {
-    const REPEATED: NList<&str, Peano!(7)> = nlist!["h"; _];
+    const fn repat<T, L>(val: T) -> NList<T, L>
+    where
+        T: Copy,
+        L: PeanoInt,
+    {
+        nlist![val; _]
+    }
+
+    const REPEATED: NList<&str, Peano!(7)> = repat("h");
     assert_eq!(REPEATED, nlist!["h", "h", "h", "h", "h", "h", "h"]);
 }
 

@@ -572,6 +572,33 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
         self.node.next
     }
 
+    /// Const alternative of [`into_tail`], returns the remainder of the list by value.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, Peano, nlist};
+    ///
+    /// const LIST_A: NList<u32, Peano!(0)> = nlist![3].into_tail_const();
+    /// assert_eq!(LIST_A, nlist![]);
+    ///
+    /// const LIST_B: NList<u32, Peano!(1)> = nlist![5, 3].into_tail_const();
+    /// assert_eq!(LIST_B, nlist![3]);
+    ///
+    /// const LIST_C: NList<u32, Peano!(2)> = nlist![8, 5, 3].into_tail_const();
+    /// assert_eq!(LIST_C, nlist![5, 3]);
+    ///
+    /// ```
+    pub const fn into_tail_const(self) -> NList<T, L> 
+    where
+        T: Copy
+    {
+        destructure!{Self{node} = self}
+        destructure!{Cons{elem: _, next, len_te: _} = node}
+        
+        next
+    }
+
     /// Returns a pair of references to the first element and the remainder of the list
     /// 
     /// # Example
