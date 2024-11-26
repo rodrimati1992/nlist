@@ -29,7 +29,7 @@ features = ["rust_1_83"]
 default-features = false
 
 [dependencies.typewit]
-version = "1.8"
+version = "1.10.1"
 features = ["mut_refs"]
 default-features = false
 

@@ -61,9 +61,13 @@ pub use typewit;
 #[macro_use]
 mod macros;
 
+pub mod boolean;
+
 pub mod peano;
 
 mod nlist;
+
+mod imply_trait;
 
 pub mod receiver;
 
