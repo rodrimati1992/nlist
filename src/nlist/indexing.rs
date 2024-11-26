@@ -186,7 +186,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         i_lt_l_te: TypeEq<I::IsLt<L>, Bool<true>>,
     ) -> &mut T
     where
-        I: PeanoInt<IsLt<L> = Bool<true>>,
+        I: PeanoInt,
     {
         const fn inner<T, L, At>(list: &mut NList<T, L>, at: At) -> &mut T
         where
