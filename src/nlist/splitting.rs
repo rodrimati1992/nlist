@@ -1,9 +1,10 @@
 use const_panic::concat_panic;
 use konst::destructure;
-use typewit::{TypeCmp, TypeEq};
+use typewit::{const_marker::Bool, TypeCmp, TypeEq};
 
 use super::NList;
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
+use crate::boolean::{IfTruePI, Boolean};
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Splits this list at the `At` index.
@@ -22,14 +23,27 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// assert_eq!(after, nlist![21, 34]);
     ///
     /// ```
-    ///
+    pub const fn split_at<At>(self) -> (NList<T, At>, NList<T, peano::SubSat<L, At>>)
+    where
+        At: peano::PeanoInt<IsLe<L> = Bool<true>>,
+    {
+        self.split_at_alt(TypeEq::new::<At::IsLe<L>>())
+    }
+
+    /// Alternate version of `split_at` which takes a proof of `At <= L`
+    /// instead of requiring it as a bound.
+    /// 
+    /// # Example
+    /// 
     /// ### Conditional splitting
     ///
-    /// This example demonstrates how `split_at` can be used inside a generic function,
-    /// only calling `split_at` when the split index is in bounds.
+    /// This example demonstrates how `split_at_alt` can be used inside a generic function,
+    /// only calling `split_at_alt` when the split index is in bounds.
     ///
     /// ```rust
     /// use nlist::{NList, NListFn, Peano, PeanoInt, PeanoInt as PInt, nlist, peano};
+    /// 
+    /// use nlist::boolean::{Boolean, BoolWitG};
     /// 
     /// assert_eq!(insert_at_3(nlist![]), nlist![100, 103]);
     /// assert_eq!(insert_at_3(nlist![3]), nlist![3, 100, 103]);
@@ -50,23 +64,23 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///     type At = Peano!(3);
     /// 
     ///     let opt_te = const {
-    ///         match peano::check_le(At::NEW, L::NEW).eq() {
-    ///             Some(in_len_te) => 
+    ///         match peano::IsLe::<At, L>::BOOL_WIT {
+    ///             BoolWitG::True(is_le_te) => 
     ///                 // `.unwrap_eq()` can only panic if this function has a bug
-    ///                 Some((in_len_te, peano::eq(PInt::NEW, PInt::NEW).unwrap_eq())),
-    ///             None => None,
+    ///                 Some((is_le_te, peano::eq(PInt::NEW, PInt::NEW).unwrap_eq())),
+    ///             BoolWitG::False(_) => None,
     ///         }
     ///     };
     /// 
     ///     // Because the compiler doesn't understand arithmetic properties of PeanoInt,
     ///     // this function has to assert lengths in the above const block.
     ///     //
-    ///     // `in_len_te`: proof that `At <= L`, which allows splitting the list at `At`.
+    ///     // `is_le_te`: proof that `At <= L`, which allows splitting the list at `At`.
     ///     // 
     ///     // `ret_len_te`: proof that the length of `before.concat(to_add).concat(after)`
     ///     // (`At + Added + (L - At)`) is the same as the return type: (`L + Added`).
-    ///     if let Some((in_len_te, ret_len_te)) = opt_te {
-    ///         let (before, after) = list.coerce_len(in_len_te).split_at::<At>();
+    ///     if let Some((is_le_te, ret_len_te)) = opt_te {
+    ///         let (before, after) = list.split_at_alt::<At>(is_le_te);
     ///         
     ///         before.concat(to_add).concat(after).coerce_len(ret_len_te)
     ///     } else {
@@ -75,9 +89,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// }
     /// ```
     ///
-    pub const fn split_at<At>(self) -> (NList<T, At>, NList<T, L::SubSat<At>>)
+    pub const fn split_at_alt<At>(
+        self,
+        at_le_l_proof: TypeEq<At::IsLe<L>, Bool<true>>,
+    ) -> (NList<T, At>, NList<T, peano::SubSat<L, At>>)
     where
-        At: PeanoInt<Min<L> = At>,
+        At: peano::PeanoInt,
     {
         enum SplitState<L, At, Rem>
         where
@@ -157,6 +174,18 @@ impl<T, L: PeanoInt> NList<T, L> {
             }
         }
 
-        inner(self)
+        at_le_l_proof
+            .project::<SplitAtRetTypeFn::<T, At, L>>()
+            .to_right(inner(self))
     }
+}
+
+typewit::type_fn!{
+    struct SplitAtRetTypeFn<T, At, L>;
+
+    impl<B> B => (NList<T, IfTruePI<B, At, L>>, NList<T, peano::SubSat<L, At>>)
+    where
+        B: Boolean,
+        At: PeanoInt,
+        L: PeanoInt,
 }

@@ -1,10 +1,12 @@
 use const_panic::concat_panic;
-use typewit::TypeEq;
+use typewit::{const_marker::Bool, TypeEq};
 
 use super::{Cons, NList};
 
 #[allow(unused_imports)]
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
+
+use crate::boolean::{IfTruePI, Boolean};
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
@@ -91,8 +93,48 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn index<I>(&self) -> &T
     where
-        I: PeanoInt,
-        PlusOne<I>: PeanoInt<Max<L> = L>,
+        I: PeanoInt<IsLt<L> = Bool<true>>,
+    {
+        self.index_alt::<I>(TypeEq::NEW)
+    }
+
+    /// Alternative version of [`index`] which takes a proof of `I < L` as an argument.
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    /// use nlist::{NList, Peano, nlist, peano};
+    /// use nlist::peano::{PeanoInt, proofs};
+    /// use nlist::boolean::Bool;
+    /// use nlist::typewit::TypeEq;
+    /// 
+    /// let list = nlist![3, 5, 8, 13];
+    /// 
+    /// assert_eq!(at(&list, peano!(0)), (&3, &3));
+    /// assert_eq!(at(&list, peano!(1)), (&3, &5));
+    /// assert_eq!(at(&list, peano!(2)), (&5, &8));
+    /// assert_eq!(at(&list, peano!(3)), (&8, &13));
+    /// 
+    /// const fn at<T, L, At>(list: &NList<T, L>, _at: At) -> (&T, &T) 
+    /// where
+    ///     L: PeanoInt,
+    ///     At: PeanoInt<IsLt<L> = Bool<true>>,
+    /// {
+    ///     type Dist = Peano!(1);
+    ///
+    ///     // passes a proof of `At < L` as argument, gets back a proof that `At - Dist < L`
+    ///     let sub_lt_l = proofs::compose_sub_lt::<At, _, _>(TypeEq::NEW);
+    ///     
+    ///     (
+    ///         list.index_alt::<peano::SubSat<At, Dist>>(sub_lt_l),
+    ///         list.index::<At>(),
+    ///     )
+    /// }
+    /// ```
+    /// 
+    pub const fn index_alt<I>(&self, i_lt_l_te: TypeEq<I::IsLt<L>, Bool<true>>) -> &T 
+    where
+        I: PeanoInt
     {
         const fn inner<T, L, At>(list: &NList<T, L>, at: At) -> &T
         where
@@ -107,7 +149,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             }
         }
 
-        inner(self, I::NEW)
+        let this = i_lt_l_te.project::<IndexListLenFn<T, I, L>>()
+            .in_ref()
+            .to_left(self);
+        inner(this, I::NEW)
     }
 
     /// Returns a mutable reference to the element at the `I` index.
@@ -128,8 +173,20 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn index_mut<I>(&mut self) -> &mut T
     where
-        I: PeanoInt,
-        PlusOne<I>: PeanoInt<Max<L> = L>,
+        I: PeanoInt<IsLt<L> = Bool<true>>,
+    {
+        self.index_mut_alt::<I>(TypeEq::NEW)
+    }
+
+
+    /// Alternative version of [`index_mut`] which takes a proof of `I < L` as an argument.
+    ///
+    pub const fn index_mut_alt<I>(
+        &mut self,
+        i_lt_l_te: TypeEq<I::IsLt<L>, Bool<true>>,
+    ) -> &mut T
+    where
+        I: PeanoInt<IsLt<L> = Bool<true>>,
     {
         const fn inner<T, L, At>(list: &mut NList<T, L>, at: At) -> &mut T
         where
@@ -144,9 +201,20 @@ impl<T, L: PeanoInt> NList<T, L> {
             }
         }
 
-        inner(self, I::NEW)
+        let this = i_lt_l_te.project::<IndexListLenFn<T, I, L>>()
+            .in_mut()
+            .to_left(self);
+        inner(this, I::NEW)
     }
 }
+
+
+typewit::type_fn! {
+    struct IndexListLenFn<T, I: PeanoInt, L: PeanoInt>;
+
+    impl<B: Boolean> B => NList<T, IfTruePI<B, L, PlusOne<I>>>
+}
+
 
 enum IndexState<L, At>
 where

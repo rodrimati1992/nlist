@@ -12,6 +12,11 @@ use core::{
 
 use typewit::{TypeCmp, TypeEq, TypeNe};
 
+
+use crate::boolean::{Bool, BoolWitG, Boolean, And, Not};
+
+///////////////////////////////////////////////////////////////////////////////
+
 mod from_const;
 
 /// `typewit::TypeFn` equivalents of peano type aliases
@@ -72,6 +77,9 @@ pub type IfZero<L, Then, Else> = <L as PeanoInt>::IfZero<Then, Else>;
 /// Type alias form of [`PeanoInt::IfZeroPI`]
 pub type IfZeroPI<L, Then, Else> = <L as PeanoInt>::IfZeroPI<Then, Else>;
 
+/// Type alias form of [`PeanoInt::IsZero`]
+pub type IsZero<Lhs> = <Lhs as PeanoInt>::IsZero;
+
 /// Type alias form of [`PeanoInt::SubSat`]
 pub type SubSat<Lhs, Rhs> = <Lhs as PeanoInt>::SubSat<Rhs>;
 
@@ -86,6 +94,14 @@ pub type Min<Lhs, Rhs> = <Lhs as PeanoInt>::Min<Rhs>;
 
 /// Type alias form of [`PeanoInt::Max`]
 pub type Max<Lhs, Rhs> = <Lhs as PeanoInt>::Max<Rhs>;
+
+/// Type alias form of [`PeanoInt::IsLe`]
+pub type IsLe<Lhs, Rhs> = <Lhs as PeanoInt>::IsLe<Rhs>;
+
+/// Type alias form of [`PeanoInt::IsLt`]
+pub type IsLt<Lhs, Rhs> = <Lhs as PeanoInt>::IsLt<Rhs>;
+
+
 
 /// Trait for peano numbers, a type-level encoding of unsigned integers.
 /// 
@@ -201,6 +217,9 @@ pub trait PeanoInt:
     /// ```
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt>: PeanoInt;
 
+    /// Whether `Self` is Zero
+    type IsZero: Boolean;
+
     /// Type level equivalent of `.saturating_sub(R)`
     /// 
     /// # Example
@@ -307,6 +326,12 @@ pub trait PeanoInt:
     /// ```
     type Max<Rhs: PeanoInt>: PeanoInt;
 
+    /// Whether `Self < Rhs`
+    type IsLt<Rhs: PeanoInt>: Boolean;
+
+    /// Whether `Self <= Rhs`
+    type IsLe<Rhs: PeanoInt>: Boolean;
+
     /// Constructs this type
     /// 
     /// # Example
@@ -349,6 +374,8 @@ impl PeanoInt for Zero {
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Then;
 
+    type IsZero = Bool<true>;
+
     type SubSat<R: PeanoInt> = Zero;
 
     type Add<Rhs: PeanoInt> = Rhs;
@@ -358,6 +385,10 @@ impl PeanoInt for Zero {
     type Min<Rhs: PeanoInt> = Zero;
 
     type Max<Rhs: PeanoInt> = Rhs;
+
+    type IsLt<Rhs: PeanoInt> = Not<Rhs::IsZero>;
+    
+    type IsLe<Rhs: PeanoInt> = Bool<true>;
 
     const NEW: Self = Zero;
 
@@ -379,6 +410,8 @@ where
 
     type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Else;
 
+    type IsZero = Bool<false>;
+
     type SubSat<R: PeanoInt> = R::IfZeroPI<Self, T::SubSat<R::SubOneSat>>;
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
@@ -387,7 +420,11 @@ where
 
     type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
 
-    type Max<Rhs: PeanoInt> = Rhs::IfZeroPI<Self, PlusOne<T::Max<Rhs::SubOneSat>>>;
+    type Max<Rhs: PeanoInt> = PlusOne<Rhs::IfZeroPI<T, T::Max<Rhs::SubOneSat>>>;
+
+    type IsLt<Rhs: PeanoInt> = And<Not<Rhs::IsZero>, T::IsLt<Rhs::SubOneSat>>;
+
+    type IsLe<Rhs: PeanoInt> = And<Not<Rhs::IsZero>, T::IsLe<Rhs::SubOneSat>>;
 
     const NEW: Self = PlusOne { sub_one: T::NEW };
 
@@ -487,13 +524,13 @@ where
     PairOfPeanos_::<L, R>::EQ_WIT
 }
 
-/// Returns a [`TypeCmp`] proof of whether `L <= R` is true.
-pub const fn check_le<L, R>(_: L, _: R) -> TypeCmp<R, Add<L, SubSat<R, L>>>
+/// Returns a [`BoolWitG`] proof of whether `L <= R` is true.
+pub const fn check_le<L, R>() -> BoolWitG<L::IsLe<R>>
 where
     L: PeanoInt,
     R: PeanoInt,
 {
-    self::eq(PeanoInt::NEW, PeanoInt::NEW)
+    Boolean::BOOL_WIT
 }
 
 

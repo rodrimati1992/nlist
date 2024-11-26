@@ -49,4 +49,22 @@ where
     }
 }
 
+/// Proof that, if A < B, then`SubSat<A, C> < B`
+/// 
+pub const fn compose_sub_lt<A, B, C>(
+    _a_is_lt_b: TypeEq<IsLt<A, B>, Bool<true>>
+) -> TypeEq<IsLt<SubSat<A, C>, B>, Bool<true>>
+where
+    A: PeanoInt,
+    B: PeanoInt,
+    C: PeanoInt,
+{
+    // not in a const block because if this function is monomorphized
+    // in a context where A >= B, it could cause a compilation error.
+    match Boolean::BOOL_WIT {
+        BoolWitG::True(x) => x,
+        BoolWitG::False(_) => panic!("axiom"),
+    }
+}
+
 
