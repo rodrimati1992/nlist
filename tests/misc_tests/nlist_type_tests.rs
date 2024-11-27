@@ -1,3 +1,4 @@
+mod nlist_comparison_tests;
 mod nlist_constructor_tests;
 mod nlist_getters_tests;
 mod nlist_indexing_and_recombining_tests;
