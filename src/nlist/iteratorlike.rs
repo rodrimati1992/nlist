@@ -284,9 +284,8 @@ impl<T, L: PeanoInt> NList<T, L> {
         match L::PEANO_WIT {
             PeanoWit::Zero { .. } => self,
             PeanoWit::PlusOne(len_te) => {
-                konst::destructure!{(elem, tail) = self.coerce_len(len_te).into_split_head()}
-
-                inner(tail, NList::cons(elem, NList::nil()))
+                inner(self.coerce_len(len_te), NList::nil())
+                    .coerce_len(len_te.flip())
             }
         }
     }

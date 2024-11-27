@@ -62,7 +62,7 @@ macro_rules! __parse_closure_2_args {
 
         $func:expr $(,)?
     ) => {
-        $crate::$callback! {$($args)* |a: _, b: _| -> _ { $func(a, b) }}
+        $crate::$callback! {$($args)* |a: _, b: _| -> _ { ({$func})(a, b) }}
     };
 }  
 

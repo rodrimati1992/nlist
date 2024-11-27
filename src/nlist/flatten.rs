@@ -290,6 +290,91 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             }
         }
 
-        inner(NList::nil(), self, NList::nil()).reverse()
+        // `inner` assumes that LSub, LOuter, and LRet are all non-zero,
+        // so FlattenWit allows us to assert that they're all non-zero when its called.
+        match FlattenWit::<T, L, L2>::NEW {
+            FlattenWit::ReturnsEmpty(ret_te) => {
+                // leak-safety: list contains no elements, 
+                // because it returns a zero-length list after flattening
+                core::mem::forget(self);
+
+                ret_te.to_left(NList::nil())
+            }
+            FlattenWit::ReturnsNonEmpty{arg_te, ret_te} => {
+                let this = arg_te.to_right(self);
+                let ret = inner(NList::nil(), this, NList::nil()).reverse();
+                ret_te.to_left(ret)                
+            }
+        }
     }
 }
+
+
+typewit::type_fn! {
+    struct NList2DFn<T>;
+
+    impl<LOuter, LInner> (LOuter, LInner) => NList<NList<T, LInner>, LOuter>
+    where
+        LOuter: PeanoInt,
+        LInner: PeanoInt,        
+}
+
+enum FlattenWit<T, LOuter, LInner> 
+where
+    LOuter: PeanoInt,
+    LInner: PeanoInt,
+{
+    ReturnsNonEmpty {
+        arg_te: TypeEq<
+            NList<NList<T, LInner>, LOuter>,
+            NList<NList<T, PlusOne<LInner::SubOneSat>>, PlusOne<LOuter::SubOneSat>>,
+        >,
+        ret_te: TypeEq<
+            NList<T, peano::Mul<LOuter, LInner>>, 
+            NList<T, peano::Mul<PlusOne<LOuter::SubOneSat>, PlusOne<LInner::SubOneSat>>>,
+        >,
+    },
+    ReturnsEmpty(
+        TypeEq<
+            NList<T, peano::Mul<LOuter, LInner>>, 
+            NList<T, Zero>, 
+        >
+    ),
+}
+
+impl<T, LOuter, LInner> FlattenWit<T, LOuter, LInner>
+where
+    LOuter: PeanoInt,
+    LInner: PeanoInt,
+{
+    const NEW: Self = match (LOuter::PEANO_WIT, LInner::PEANO_WIT) {
+        (PeanoWit::PlusOne(louter_te), PeanoWit::PlusOne(linner_te)) => {
+            let arg_te = louter_te.zip(linner_te).map(NList2DFn::NEW);
+
+            let ret_te = louter_te.zip(linner_te).map(peano::MulFn::NEW).map(NListFn::NEW);
+
+            Self::ReturnsNonEmpty { arg_te, ret_te }
+        }
+        (PeanoWit::Zero(louter_te), _) => {
+            let ret_te = louter_te
+                .zip(TypeEq::new::<LInner>())
+                .map(peano::MulFn::NEW)
+                .map(NListFn::NEW);
+
+            Self::ReturnsEmpty(ret_te)
+        }
+        (_, PeanoWit::Zero(linner_te)) => {
+            let ret_te = TypeEq::new::<LOuter>()
+                .zip(linner_te)
+                .map(peano::MulFn::NEW)
+                .join(peano::proofs::commutative_mul::<LOuter, Zero>())
+                .map(NListFn::NEW);
+
+            Self::ReturnsEmpty(ret_te)
+        }
+    };
+}
+
+
+
+
