@@ -14,3 +14,11 @@ pub fn assert_type<Expected>(val: impl Sized) {
         std::any::type_name::<Expected>()
     );
 }
+
+#[track_caller]
+pub fn assert_type_eq<Found, Expected>() {
+    assert_eq!(
+        std::any::type_name::<Found>(),
+        std::any::type_name::<Expected>()
+    );
+}
