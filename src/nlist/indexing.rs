@@ -222,13 +222,13 @@ where
     At: PeanoInt,
 {
     Iterating {
-        // The `At::IfZeroPI<L` part is necessary so that, 
+        // The `IfZeroPI<At, L` part is necessary so that, 
         // when this enum is `Self::Finished`,
         // the recursive call to `inner` in the dead `Iterating` branch
         // doesn't cause const panics.
         // If rustc didn't evaluate const code in dead branches, this field would be:
         // `TypeEq<L, PlusOne<L::SubOneSat>>`
-        l_te: TypeEq<L, PlusOne<At::IfZeroPI<L, L::SubOneSat>>>,
+        l_te: TypeEq<L, PlusOne<peano::IfZeroPI<At, L, L::SubOneSat>>>,
         at_te: TypeEq<At, PlusOne<At::SubOneSat>>,
     },
     Finished {
@@ -239,7 +239,7 @@ where
 typewit::type_fn! {
     struct MapTailFn<L>;
 
-    impl<At> At => PlusOne<At::IfZeroPI<L, L::SubOneSat>>
+    impl<At> At => PlusOne<peano::IfZeroPI<At, L, L::SubOneSat>>
     where
         At: PeanoInt,
         L: PeanoInt,

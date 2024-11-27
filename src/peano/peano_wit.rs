@@ -58,7 +58,7 @@ use crate::peano::{PeanoInt, PlusOne, Zero};
 ///     // }
 ///     struct StrOrU8;
 /// 
-///     impl<L: PeanoInt> L => L::IfZero<&'static str, usize>
+///     impl<L: PeanoInt> L => peano::IfZero<L, &'static str, usize>
 /// }
 /// 
 /// ```

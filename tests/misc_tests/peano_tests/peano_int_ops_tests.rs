@@ -1,7 +1,7 @@
 use nlist::{Peano, peano};
 use nlist::boolean::{Bool, Boolean};
 use nlist::peano::{IntoPeano, PeanoInt, PeanoWit, FromUsize, IntoUsize, PlusOne, Usize, Zero};
-use nlist::typewit::{CallFn, TypeFn};
+use nlist::typewit::{CallFn, Identity, TypeFn};
 
 use crate::misc_tests::test_utils::assert_type_eq;
 
@@ -232,6 +232,52 @@ fn is_le_test() {
 }
 
 
+macro_rules! test_nonassoc_op {
+    (
+        $type_alias:ident<$($args:ident),*>
+        $typefn:ident
+        $arg_bound:ident 
+        $ret_bound:ident 
+        =>
+        $(( $($arg_val:ty),* => $returned:ty ))*
+    ) => (
+        fn assert_bound<T: $ret_bound>(){}
 
-    // IfZero<Then, Else>
-    // IfZeroPI<Then, Else>
+        #[allow(unused_parens)]
+        fn inner<Expected, This: PeanoInt, $($args: $arg_bound),*>() {
+            assert_bound::<peano::$type_alias<This $(,$args)*>>();
+
+            assert_type_eq::<peano::$type_alias<This $(,$args)*>, Expected>();
+            
+            assert_type_eq::<CallFn<peano::type_fns::$typefn, (This $(,$args)*)>, Expected>();
+        }
+
+        $(
+            inner::<$returned, $($arg_val),*>();
+        )*
+    )
+}
+
+#[test]
+fn if_zero_test() {
+    test_nonassoc_op! {
+        IfZero<A, B> IfZeroFn Identity Identity =>
+
+        (Peano!(0), u8, u16 => u8)
+        (Peano!(1), u8, u16 => u16)
+        (Peano!(2), u8, u16 => u16)
+        (Peano!(3), u8, u16 => u16)
+    }
+}
+
+#[test]
+fn if_zero_pi_test() {
+    test_nonassoc_op! {
+        IfZeroPI<A, B> IfZeroPIFn PeanoInt PeanoInt =>
+
+        (Peano!(0), Peano!(10), Peano!(20) => Peano!(10))
+        (Peano!(1), Peano!(11), Peano!(21) => Peano!(21))
+        (Peano!(2), Peano!(12), Peano!(22) => Peano!(22))
+        (Peano!(3), Peano!(13), Peano!(23) => Peano!(23))
+    }
+}

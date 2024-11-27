@@ -75,11 +75,11 @@ mod std_impls;
 /// Type alias form of [`PeanoInt::SubOneSat`]
 pub type SubOneSat<Lhs> = <Lhs as PeanoInt>::SubOneSat;
 
-/// Type alias form of [`PeanoInt::IfZero`]
-pub type IfZero<L, Then, Else> = <L as PeanoInt>::IfZero<Then, Else>;
+/// Type alias form of [`PeanoInt::IsZero`] chained with [`Boolean::IfTrue`]
+pub type IfZero<L, Then, Else> = <IsZero<L> as Boolean>::IfTrue<Then, Else>;
 
-/// Type alias form of [`PeanoInt::IfZeroPI`]
-pub type IfZeroPI<L, Then, Else> = <L as PeanoInt>::IfZeroPI<Then, Else>;
+/// Type alias form of [`PeanoInt::IsZero`] chained with [`Boolean::IfTruePI`]
+pub type IfZeroPI<L, Then, Else> = <IsZero<L> as Boolean>::IfTruePI<Then, Else>;
 
 /// Type alias form of [`PeanoInt::IsZero`]
 pub type IsZero<Lhs> = <Lhs as PeanoInt>::IsZero;
@@ -189,37 +189,6 @@ pub trait PeanoInt:
 
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt>: PeanoCmpWit<L = Self, R = R>;
-
-
-    /// Evaluates to `Then` if `Self == Zero`, evaluates to `Else` if `Self == PlusOne<_>`
-    /// 
-    /// # Example
-    /// 
-    /// ```rust
-    /// use nlist::{PeanoInt, Peano, peano};
-    /// 
-    /// let _: peano::IfZero<Peano!(0), &str, u8> = "";
-    /// let _: peano::IfZero<Peano!(1), &str, u8> = 0u8;
-    /// let _: peano::IfZero<Peano!(2), &str, u8> = 0u8;
-    /// ```
-    type IfZero<Then, Else>;
-
-    /// Variant of `IfZero` which takes and evaluates to types that impl `PeanoInt`
-    /// 
-    /// # Example
-    /// 
-    /// ```rust
-    /// use nlist::{PeanoInt, Peano, peano};
-    /// 
-    /// const fn foo<L: PeanoInt>() -> impl PeanoInt {
-    ///     peano::IfZeroPI::<L, Peano!(3), Peano!(5)>::NEW
-    /// }
-    /// 
-    /// assert_eq!(foo::<Peano!(0)>(), 3);
-    /// assert_eq!(foo::<Peano!(1)>(), 5);
-    /// assert_eq!(foo::<Peano!(2)>(), 5);
-    /// ```
-    type IfZeroPI<Then: PeanoInt, Else: PeanoInt>: PeanoInt;
 
     /// Whether `Self` is Zero
     type IsZero: Boolean;
@@ -374,10 +343,6 @@ impl PeanoInt for Zero {
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
 
-    type IfZero<Then, Else> = Then;
-
-    type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Then;
-
     type IsZero = Bool<true>;
 
     type SubSat<R: PeanoInt> = Zero;
@@ -410,21 +375,17 @@ where
     #[doc(hidden)]
     type __PairOfPeanos<R: PeanoInt> = PairOfPeanos<Self, R>;
 
-    type IfZero<Then, Else> = Else;
-
-    type IfZeroPI<Then: PeanoInt, Else: PeanoInt> = Else;
-
     type IsZero = Bool<false>;
 
-    type SubSat<R: PeanoInt> = R::IfZeroPI<Self, T::SubSat<R::SubOneSat>>;
+    type SubSat<R: PeanoInt> = IfZeroPI<R, Self, T::SubSat<R::SubOneSat>>;
 
     type Add<Rhs: PeanoInt> = PlusOne<T::Add<Rhs>>;
 
     type Mul<Rhs: PeanoInt> = Add<Mul<T, Rhs>, Rhs>;
 
-    type Min<Rhs: PeanoInt> = Rhs::IfZeroPI<Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
+    type Min<Rhs: PeanoInt> = IfZeroPI<Rhs, Zero, PlusOne<T::Min<Rhs::SubOneSat>>>;
 
-    type Max<Rhs: PeanoInt> = PlusOne<Rhs::IfZeroPI<T, T::Max<Rhs::SubOneSat>>>;
+    type Max<Rhs: PeanoInt> = PlusOne<IfZeroPI<Rhs, T, T::Max<Rhs::SubOneSat>>>;
 
     type IsLt<Rhs: PeanoInt> = And<Not<Rhs::IsZero>, T::IsLt<Rhs::SubOneSat>>;
 

@@ -73,7 +73,7 @@ pub struct Cons<T, L: PeanoInt> {
 /// - `Zero`: this evaluates to `Nil<T, L>`
 /// - `PlusOne<_>`: this evaluates to `Cons<T, L>`
 ///
-pub type Node<T, L> = <L as PeanoInt>::IfZero<Nil<T, L>, Cons<T, L>>;
+pub type Node<T, L> = peano::IfZero<L, Nil<T, L>, Cons<T, L>>;
 
 ////////////////////////////////////////////////////////////////////////////////
 
