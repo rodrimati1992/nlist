@@ -1,4 +1,32 @@
 //! Abstraction over `T`/`&'a T`/`&'a mut T`
+//! 
+//! # Example
+//! 
+//! ```rust
+//! use nlist::receiver::{self, HktApply, Receiver, ReceiverWit};
+//! 
+//! assert_eq!(field(Wrapper(3)), 3);
+//! assert_eq!(field(&Wrapper(3)), &3);
+//! assert_eq!(field(&mut Wrapper(3)), &mut 3);
+//! 
+//! 
+//! struct Wrapper(u32);
+//! 
+//! /// Projects a `Wrapper/&Wrapper/&mut Wrapper` to its wrapped field
+//! const fn field<'a, S>(this: S) -> HktApply<'a, S::Hkt, u32>
+//! where
+//!     S: Receiver<'a, Wrapper>
+//! {
+//!     let mapper = receiver::MapReceiverFn::<'a, Wrapper, u32>::NEW;
+//!     match ReceiverWit::<'a, S, Wrapper>::NEW {
+//!         ReceiverWit::Value(te) => te.map(mapper).to_left(te.to_right(this).0),
+//!         ReceiverWit::Ref(te) => te.map(mapper).to_left(&te.to_right(this).0),
+//!         ReceiverWit::RefMut(te) => te.map(mapper).to_left(&mut te.to_right(this).0),
+//!     }
+//! }
+//! ```
+
+
 
 use core::marker::PhantomData;
 
