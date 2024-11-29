@@ -67,7 +67,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///         match peano::IsLe::<At, L>::BOOL_WIT {
     ///             BoolWitG::True(is_le_te) => 
     ///                 // `.unwrap_eq()` can only panic if this function has a bug
-    ///                 Some((is_le_te, peano::eq(PInt::NEW, PInt::NEW).unwrap_eq())),
+    ///                 Some((is_le_te, peano::eq().unwrap_eq())),
     ///             BoolWitG::False(_) => None,
     ///         }
     ///     };
@@ -125,8 +125,8 @@ impl<T, L: PeanoInt> NList<T, L> {
             const NEW: Self = match (
                 L::PEANO_WIT,
                 At::PEANO_WIT,
-                peano::eq(peano::Min::<SubOneSat<L>, Rem>::NEW, Rem::NEW),
-                peano::eq(L::NEW, Rem::NEW),
+                peano::eq::<peano::Min<SubOneSat<L>, Rem>, Rem>(),
+                peano::eq::<L, Rem>(),
             ) {
                 (PeanoWit::PlusOne(input_te), PeanoWit::PlusOne(at_te), TypeCmp::Eq(rem_te), _) => {
                     SplitState::Iterating {

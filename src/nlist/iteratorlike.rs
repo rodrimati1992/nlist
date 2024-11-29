@@ -236,10 +236,10 @@ impl<T, L: PeanoInt> NList<T, L> {
             LA: PeanoInt,
             LR: PeanoInt,
         {
-            const NEW: Self = match (LI::PEANO_WIT, peano::eq(LA::NEW, LR::NEW)) {
+            const NEW: Self = match (LI::PEANO_WIT, peano::eq::<LA, LR>()) {
                 (PeanoWit::PlusOne(input_te), TypeCmp::Ne(_)) => {
                     let TypeCmp::Eq(output_te) =
-                        peano::eq(PlusOne::<LA>::NEW, peano::Min::<PlusOne<LA>, LR>::NEW)
+                        peano::eq::<PlusOne<LA>, peano::Min<PlusOne<LA>, LR>>()
                     else {
                         concat_panic! {"somehow, LA > LR: ", LA::USIZE, " > ", LR::USIZE}
                     };

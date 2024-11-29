@@ -161,13 +161,12 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             const NEW: Self = match (
                 LSub::PEANO_WIT,
                 LOuter::PEANO_WIT,
-                peano::eq(LAcc::NEW, LRet::NEW),
+                peano::eq::<LAcc, LRet>(),
             ) {
                 (lsub_wit @ PeanoWit::PlusOne(sub_te), _, TypeCmp::Ne(_)) => {
-                    let TypeCmp::Eq(output_te) = peano::eq(
-                        PlusOne::<LAcc>::NEW,
-                        peano::Min::<PlusOne<LAcc>, LRet>::NEW,
-                    ) else {
+                    let TypeCmp::Eq(output_te) = 
+                        peano::eq::<PlusOne<LAcc>, peano::Min<PlusOne<LAcc>, LRet>>() 
+                    else {
                         concat_panic! {"somehow, LAcc > LRet: ", LAcc::USIZE, " > ", LRet::USIZE}
                     };
 

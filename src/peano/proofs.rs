@@ -11,7 +11,7 @@ where
 {
     // axiom
     const {
-        super::eq(Add::<L, R>::NEW, Add::<R, L>::NEW).unwrap_eq()        
+        super::eq::<Add<L, R>, Add<R, L>>().unwrap_eq()        
     }
 }
 
@@ -23,7 +23,7 @@ where
 {
     // axiom
     const {
-        super::eq(Mul::<L, R>::NEW, Mul::<R, L>::NEW).unwrap_eq()        
+        super::eq::<Mul<L, R>, Mul<R, L>>().unwrap_eq()        
     }
 }
 
@@ -34,7 +34,7 @@ where
 {
     // axiom
     const {
-        super::eq(Add::<L, Zero>::NEW, L::NEW).unwrap_eq()        
+        super::eq::<Add<L, Zero>, L>().unwrap_eq()        
     }
 }
 
@@ -45,7 +45,7 @@ where
 {
     // axiom
     const {
-        super::eq(SubSat::<L, Zero>::NEW, L::NEW).unwrap_eq()        
+        super::eq::<SubSat<L, Zero>, L>().unwrap_eq()        
     }
 }
 

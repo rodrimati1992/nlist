@@ -417,7 +417,7 @@ pub const fn to_usize<I: PeanoInt>(_: I) -> usize {
 
 
 /// Returns a [`TypeCmp<L, R>`], which is a proof of whether `L == R` or `L != R`.
-pub const fn eq<L, R>(_: L, _: R) -> TypeCmp<L, R>
+pub const fn eq<L, R>() -> TypeCmp<L, R>
 where
     L: PeanoInt,
     R: PeanoInt,

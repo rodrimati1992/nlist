@@ -292,7 +292,7 @@ where
     L2: PeanoInt,
 {
     fn eq(&self, rhs: &NList<U, L2>) -> bool {
-        let TypeCmp::Eq(te_len) = peano::eq(L::NEW, L2::NEW) else {
+        let TypeCmp::Eq(te_len) = peano::eq::<L, L2>() else {
             return false;
         };
 
@@ -958,11 +958,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// use nlist::typewit::TypeCmp;
     /// 
     /// pub const fn make_list<L: PeanoInt>() -> NList<usize, L> {
-    ///     if let TypeCmp::Eq(len3_te) = peano::eq(peano!(3), L::NEW) {
+    ///     if let TypeCmp::Eq(len3_te) = peano::eq::<Peano!(3), L>() {
     ///         // len3_te is a proof that `Peano!(3) == L`
     ///         // which allows us to coerce `NList<T, Peano!(3)>` to `NList<T, L>`
     ///         nlist![3, 5, 8].coerce_len(len3_te)
-    ///     } else if let TypeCmp::Eq(len5_te) = peano::eq(peano!(5), L::NEW) {
+    ///     } else if let TypeCmp::Eq(len5_te) = peano::eq::<Peano!(5), L>() {
     ///         // len5_te is a proof that `Peano!(5) == L`
     ///         nlist![3, 5, 8, 13, 21].coerce_len(len5_te)
     ///     } else {
