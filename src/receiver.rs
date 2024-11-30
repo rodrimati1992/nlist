@@ -29,6 +29,7 @@
 
 
 use core::marker::PhantomData;
+use core::fmt::{self, Debug};
 
 use typewit::{type_fn, Identity, TypeEq};
 
@@ -46,6 +47,22 @@ pub trait Receiver<'a, T: 'a>: Sized {
     // ```
     // you can use this bound instead of the current bound
     type Hkt: ReceiverHkt<'a, Apply<T>: Identity<Type = Self>>;
+
+    /// Witness for whether Self is a `T`,`&'a T`, or `&'a mut T`.
+    const RECEIVER_WIT :ReceiverWit<'a, Self, T> = {
+        // this `TypeEq` created with the `Apply<T>: Identity<Type = Self>` bound
+        // does what the `Apply<T> = Self` bound would do if it worked without issues.
+        let identity_te: TypeEq<HktApply<'a, Self::Hkt, T>, Self> = 
+            <HktApply<'a, Self::Hkt, T> as Identity>::TYPE_EQ;
+
+        identity_te
+            .map(MapReceiverWitRArgFn::<'a, T>::NEW)
+            .to_right(match HktOf::<Self, T>::HKT_WIT {
+                HktWit::Value(te) => ReceiverWit::Value(te.map(HktApplyFn::<'a, T>::NEW)),
+                HktWit::Ref(te) => ReceiverWit::Ref(te.map(HktApplyFn::<'a, T>::NEW)),
+                HktWit::RefMut(te) => ReceiverWit::RefMut(te.map(HktApplyFn::<'a, T>::NEW)),
+            })
+    };
 }
 
 
@@ -143,6 +160,34 @@ where
     RefMut(TypeEq<K, RefMutHkt<'a>>),
 }
 
+impl<'a, K> Copy for HktWit<'a, K>
+where
+    K: ReceiverHkt<'a>
+{}
+
+impl<'a, K> Clone for HktWit<'a, K>
+where
+    K: ReceiverHkt<'a>
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<'a, K> Debug for HktWit<'a, K>
+where
+    K: ReceiverHkt<'a>
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Value{..} => fmt.write_str("Value"),
+            Self::Ref{..} => fmt.write_str("Ref"),
+            Self::RefMut{..} => fmt.write_str("RefMut"),
+        }
+    }
+}
+
+
 
 ////////////////////////////////////////////////////////
 
@@ -161,26 +206,39 @@ where
     RefMut(TypeEq<R, &'a mut T>),
 }
 
+impl<'a, R, T> Copy for ReceiverWit<'a, R, T>
+where
+    R: Receiver<'a, T>,
+{}
+
+impl<'a, R, T> Clone for ReceiverWit<'a, R, T>
+where
+    R: Receiver<'a, T>,
+{
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<'a, R, T> Debug for ReceiverWit<'a, R, T>
+where
+    R: Receiver<'a, T>,
+{
+    fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::Value{..} => fmt.write_str("Value"),
+            Self::Ref{..} => fmt.write_str("Ref"),
+            Self::RefMut{..} => fmt.write_str("RefMut"),
+        }
+    }
+}
+
 impl<'a, R, T> ReceiverWit<'a, R, T>
 where
     R: Receiver<'a, T>,
 {
     /// Constructs this `ReceiverWit`
-    pub const NEW: Self = {
-
-        // this `TypeEq` created with the `Apply<T>: Identity<Type = Self>` bound
-        // does what the `Apply<T> = Self` bound would do if it worked without issues.
-        let identity_te: TypeEq<HktApply<'a, R::Hkt, T>, R> = 
-            <HktApply<'a, R::Hkt, T> as Identity>::TYPE_EQ;
-
-        identity_te
-            .map(MapReceiverWitRArgFn::<'a, T>::NEW)
-            .to_right(match HktOf::<R, T>::HKT_WIT {
-                HktWit::Value(te) => ReceiverWit::Value(te.map(HktApplyFn::<'a, T>::NEW)),
-                HktWit::Ref(te) => ReceiverWit::Ref(te.map(HktApplyFn::<'a, T>::NEW)),
-                HktWit::RefMut(te) => ReceiverWit::RefMut(te.map(HktApplyFn::<'a, T>::NEW)),
-            })
-    };
+    pub const NEW: Self = R::RECEIVER_WIT;
 }
 
 typewit::type_fn! {
@@ -206,7 +264,7 @@ typewit::type_fn! {
 
 typewit::type_fn! {
     /// A [`TypeFn`](typewit::TypeFn) version of [`MapReceiver`]
-    /// which takes the receiver type as an arguments.
+    /// which takes the receiver type as an argument.
     pub struct MapReceiverFn<'a, T, U>;
 
     impl<R> R => MapReceiver<'a, R, T, U>
@@ -219,15 +277,14 @@ typewit::type_fn! {
 ////////////////////////////////////////////////////////
 
 /// By reference conversion from `&&T`/`&&mut T`/`&T` to `&T`
-pub const fn as_ref<'a, 'b, P, T>(this: &'b P) -> &'b T
+pub const fn as_ref<'a, 'b, T>(this: &'b impl Receiver<'a, T>) -> &'b T
 where
-    P: Receiver<'a, T>,
     T: 'a,
     'a: 'b,
 {
     let func = type_fn::GRef::<'b>::NEW;
 
-    match ReceiverWit::<'a, P, T>::NEW {
+    match ReceiverWit::<'a, _, T>::NEW {
         ReceiverWit::Value(te) => te.map(func).to_right(this),
         ReceiverWit::Ref(te) => te.map(func).to_right(this),
         ReceiverWit::RefMut(te) => te.map(func).to_right(this),
