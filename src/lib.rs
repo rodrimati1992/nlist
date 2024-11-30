@@ -31,6 +31,8 @@
 //!     before = NList::from_array(array);
 //!     
 //!     // math spice: using arithmetic properties to coerce equal generic lengths
+//!     // Alternatively, you can pass  `peano::eq().unwrap_eq()` to `coerce_lem`
+//!     // for an easier, if more panic prone, approach.
 //!     // 
 //!     // coercing `NList<u128, L - 0>` to `NList<u128, L>`
 //!     after.coerce_len(peano::proofs::sub_identity::<L>())

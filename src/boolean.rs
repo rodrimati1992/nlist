@@ -1,4 +1,4 @@
-//! Boolean trait and operations
+//! Traits and operations for type-level booleans
 
 use crate::PeanoInt;
 

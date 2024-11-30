@@ -98,7 +98,7 @@ impl<T, L: PeanoInt> NList<T, L> {
         self.index_alt::<I>(TypeEq::NEW)
     }
 
-    /// Alternative version of [`index`] which takes a proof of `I < L` as an argument.
+    /// Alternative version of [`index`](Self::index) which takes a proof of `I < L` as an argument.
     ///
     /// # Example
     ///
@@ -179,7 +179,8 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
 
-    /// Alternative version of [`index_mut`] which takes a proof of `I < L` as an argument.
+    /// Alternative version of [`index_mut`](Self::index_mut) 
+    /// which takes a proof of `I < L` as an argument.
     ///
     pub const fn index_mut_alt<I>(
         &mut self,

@@ -1,6 +1,41 @@
 //! Type-level integers which use a unary representation
 //! 
+//! The operators on this type-level integer representation are
+//! implemented as associated types on the [`PeanoInt`] trait,
+//! and don't require bounds other than `PeanoInt` to use them.
 //! 
+//! # Example
+//! 
+//! Constructing an NList that's `A * B + C` large.
+//! 
+//! ```rust
+//! use nlist::{NList, Peano, PeanoInt, peano, nlist};
+//! 
+//! // 3 * 0 + 1 == 1
+//! assert_eq!(make_nlist::<Peano!(3), Peano!(0), Peano!(1)>(), nlist![0]);
+//! 
+//! // 2 * 1 + 3 == 5
+//! assert_eq!(make_nlist::<Peano!(2), Peano!(1), Peano!(3)>(), nlist![0, 1, 4, 9, 16]);
+//! 
+//! // 3 * 2 + 1 == 7
+//! assert_eq!(make_nlist::<Peano!(3), Peano!(2), Peano!(1)>(), nlist![0, 1, 4, 9, 16, 25, 36]);
+//! 
+//! // makes an NList<u64, A * B + C>
+//! const fn make_nlist<A, B, C>() -> NList<u64, peano::Add<peano::Mul<A, B>, C>>
+//! where
+//!     A: PeanoInt,
+//!     B: PeanoInt,
+//!     C: PeanoInt,
+//! {
+//!     const fn inner<L: PeanoInt>(index: u64) -> NList<u64, L> {
+//!         nlist::rec_from_fn!(|| (index.pow(2), inner(index + 1)))
+//!     }
+//! 
+//!     inner(0)
+//! }
+//! 
+//! ```
+
 
 use core::{
     cmp::{Eq, Ord, PartialEq, PartialOrd},
@@ -412,6 +447,18 @@ pub mod proofs;
 ////////////////////////////////////////////////////////////////////////////////
 
 /// Converts the peano integer to a usize
+/// 
+/// # Example
+/// 
+/// ```rust
+/// use nlist::peano;
+/// 
+/// assert_eq!(peano::to_usize(peano!(0)), 0);
+/// assert_eq!(peano::to_usize(peano!(1)), 1);
+/// assert_eq!(peano::to_usize(peano!(2)), 2);
+/// assert_eq!(peano::to_usize(peano!(3)), 3);
+/// 
+/// ```
 pub const fn to_usize<I: PeanoInt>(_: I) -> usize {
     I::USIZE
 }
@@ -420,6 +467,37 @@ pub const fn to_usize<I: PeanoInt>(_: I) -> usize {
 
 
 /// Returns a [`TypeCmp<L, R>`], which is a proof of whether `L == R` or `L != R`.
+/// 
+/// # Example
+/// 
+/// Coercing an [`NList`](crate::NList) to a specific length
+/// 
+/// ```rust
+/// use nlist::{NList, Peano, PeanoInt, nlist, peano};
+/// 
+/// assert_eq!(try_coerce(nlist![0; 0]), None);
+/// assert_eq!(try_coerce(nlist![3]), None);
+/// assert_eq!(try_coerce(nlist![3, 5]), None);
+/// assert_eq!(try_coerce(nlist![3, 5, 8]), Some(nlist![3, 5, 8]));
+/// assert_eq!(try_coerce(nlist![3, 5, 8, 13]), None);
+/// assert_eq!(try_coerce(nlist![3, 5, 8, 13, 21]), None);
+/// 
+/// const fn try_coerce<T, L>(list: NList<T, L>) -> Option<NList<T, Peano!(3)>>
+/// where
+///     T: Copy,
+///     L: PeanoInt
+/// {
+///     match peano::eq::<L, Peano!(3)>().eq() {
+///         Some(te) => Some(list.coerce_len(te)),
+///         None => {
+///             // works around "destructor cannot be evaluated at compile-time" error
+///             list.assert_copy_drop();
+///
+///             None
+///         }
+///     }
+/// }
+/// ```
 pub const fn eq<L, R>() -> TypeCmp<L, R>
 where
     L: PeanoInt,
@@ -429,6 +507,7 @@ where
 }
 
 /// Returns a [`BoolWitG`] proof of whether `L <= R` is true.
+/// 
 pub const fn check_le<L, R>() -> BoolWitG<L::IsLe<R>>
 where
     L: PeanoInt,

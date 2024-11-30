@@ -572,7 +572,8 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
         self.node.next
     }
 
-    /// Const alternative of [`into_tail`], returns the remainder of the list by value.
+    /// Const alternative of [`into_tail`](Self::into_tail), 
+    /// returns the remainder of the list by value.
     /// 
     /// # Example
     /// 
