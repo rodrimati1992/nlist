@@ -13,11 +13,12 @@
 //!
 //! const LIST: NList<u128, Peano!(7)> = transform(nlist![3, 5, 8, 13, 21, 34, 55]);
 //!
-//! assert_eq!(LIST, nlist![21, 34, 55, 6, 10, 16, 26]);
+//! assert_eq!(LIST, nlist![21, 34, 55, 103, 105, 108, 113]);
 //!
 //! type SplitIndex = Peano!(4);
+//!
 //! const fn transform<L>(
-//!     list: NList<u128, peano::Add<SplitIndex, L>>
+//!     list: NList<u128, peano::Add<SplitIndex, L>>,
 //! ) -> NList<u128, peano::Add<SplitIndex, L>>
 //! where
 //!     L: PeanoInt,
@@ -30,21 +31,35 @@
 //!     mutate_array(&mut array);
 //!     before = NList::from_array(array);
 //!     
-//!     // math spice: using arithmetic properties to coerce equal generic lengths
-//!     // Alternatively, you can pass  `peano::eq().unwrap_eq()` to `coerce_lem`
-//!     // for an easier, if more panic prone, approach.
+//!     // math spice: using arithmetic properties to coerce equal generic lengths.
+//!     // 
+//!     // Alternatively, you can pass  `peano::eq().unwrap_eq()` to `coerce_len`
+//!     // for an easier, but panic prone, approach:
+//!     // ```
+//!     // return after.concat(before).coerce_len(peano::eq().unwrap_eq())
+//!     // ```
 //!     // 
 //!     // coercing `NList<u128, L - 0>` to `NList<u128, L>`
-//!     after.coerce_len(peano::proofs::sub_identity::<L>())
-//!         .concat(before)
+//!     let coerced_after = after.coerce_len(peano::proofs::sub_identity::<L>());
+//! 
+//!     coerced_after.concat(before)
 //!         // coercing `NList<u128, L + SplitIndex>` to `NList<u128, SplitIndex + L>`
 //!         .coerce_len(peano::proofs::commutative_add::<L, SplitIndex>())
 //! }
 //! 
 //! const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
-//!     *array = konst::array::map_!(*array, |x| x * 2);
+//!     *array = konst::array::map_!(*array, |x| 100 + x);
 //! }
 //! ```
+//!
+//! # No-std support
+//!
+//! `nlist` is `#![no_std]`, it can be used anywhere Rust can be used.
+//!
+//! # Minimum Supported Rust Version
+//!
+//! `nlist` requires Rust 1.83.0.
+//!
 //!
 //! [inline-allocated list]: crate::NList
 //! [`NList`]: crate::NList
@@ -88,4 +103,8 @@ pub mod __ {
     pub use core::primitive::bool;
 }
 
+
+#[cfg(doctest)]
+#[doc = include_str!("../README.md")]
+pub struct ReadmeTest;
 
