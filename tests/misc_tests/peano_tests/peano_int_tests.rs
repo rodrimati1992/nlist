@@ -1,5 +1,7 @@
 use nlist::{Peano, peano};
+use nlist::boolean::BoolWitG;
 use nlist::peano::{IntoPeano, PeanoInt, PeanoWit, FromUsize, IntoUsize, PlusOne, Usize, Zero};
+use nlist::typewit::TypeCmp;
 
 use crate::misc_tests::test_utils::{assertm, assert_type, assert_type_eq};
 
@@ -65,3 +67,61 @@ fn peano_value_test() {
         64 
     }
 }
+
+#[test]
+fn eq_test() {
+    macro_rules! test_cases {
+        ($(($l:literal $r:literal $is_eq:tt))*) => ($({
+            type L = Peano!($l);
+            type R = Peano!($r);
+
+            assert_type::<TypeCmp<L, R>>(peano::eq::<L, R>());
+
+            let ret = peano::eq::<L, R>();
+            assert_eq!($is_eq, ret.is_eq(), "{} {ret:?} {} {}", $is_eq, L::USIZE, R::USIZE);
+        })*)
+    }
+
+    test_cases!{
+        (0 0 true ) (0 1 false) (0 2 false) (0 3 false) (0 4 false) 
+        (1 0 false) (1 1 true ) (1 2 false) (1 3 false) (1 4 false) 
+        (2 0 false) (2 1 false) (2 2 true ) (2 3 false) (2 4 false) 
+        (3 0 false) (3 1 false) (3 2 false) (3 3 true ) (3 4 false) 
+        (4 0 false) (4 1 false) (4 2 false) (4 3 false) (4 4 true ) 
+    }
+}
+
+#[test]
+fn check_le_test(){
+    macro_rules! test_cases {
+        ($(($l:literal $r:literal $is_le:tt))*) => ($({
+            type L = Peano!($l);
+            type R = Peano!($r);
+
+            assert_type::<BoolWitG<peano::IsLe<L, R>>>(peano::check_le::<L, R>());
+
+            let ret = peano::check_le::<L, R>();
+
+            assert_eq!(
+                matches!(ret, BoolWitG::True{..}),
+                $is_le,
+                "{} {ret:?} {} {}",
+                $is_le,
+                L::USIZE,
+                R::USIZE,
+            );
+        })*)
+    }
+
+    test_cases!{
+        (0 0 true ) (0 1 true ) (0 2 true ) (0 3 true ) (0 4 true) 
+        (1 0 false) (1 1 true ) (1 2 true ) (1 3 true ) (1 4 true) 
+        (2 0 false) (2 1 false) (2 2 true ) (2 3 true ) (2 4 true) 
+        (3 0 false) (3 1 false) (3 2 false) (3 3 true ) (3 4 true) 
+        (4 0 false) (4 1 false) (4 2 false) (4 3 false) (4 4 true) 
+    }
+}
+
+
+
+

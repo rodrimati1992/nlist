@@ -17,6 +17,9 @@ use crate::boolean::{Bool, BoolWitG, Boolean, And, Not};
 
 ///////////////////////////////////////////////////////////////////////////////
 
+#[doc(no_inline)]
+pub use crate::{Peano, peano};
+
 mod peano_wit;
 
 pub use peano_wit::PeanoWit;
