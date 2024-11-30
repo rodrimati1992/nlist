@@ -24,3 +24,6 @@ jobs:
       run: cargo build --verbose
     - name: Run tests
       run: cargo test --verbose
+    - name: Run UI tests
+      if: ${{ matrix.rust == 'stable' }}
+      run: cargo test --features=__ui

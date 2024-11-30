@@ -22,6 +22,7 @@ include = [
 [features]
 default = ["alloc"]
 alloc = ["typewit/alloc"]
+__ui = []
 
 [dependencies.konst]
 version = "0.3.12"

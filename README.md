@@ -52,6 +52,10 @@ const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
 }
 ```
 
+# Crate features
+
+- `"alloc"`(enabled by default): enables methods that take or return [`Vec`] 
+
 # No-std support
 
 `nlist` is `#![no_std]`, it can be used anywhere Rust can be used.
@@ -68,3 +72,4 @@ const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
 
 [inline-allocated list]: https://docs.rs/nlist/latest/nlist/nlist/struct.NList.html  
 [NList]: https://docs.rs/nlist/latest/nlist/nlist/struct.NList.html  
+[`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html

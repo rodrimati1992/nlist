@@ -1,6 +1,8 @@
+#![cfg(feature = "__ui")]
+
 // HELP:
 //
-// use `cargo test -- ui trybuild=filter_here`
+// use `cargo test --features=__ui -- ui trybuild=filter_here`
 // to only  run UI tests
 
 #[test]
