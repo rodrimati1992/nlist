@@ -16,7 +16,8 @@ jobs:
     strategy:
       max-parallel: 2
       matrix:
-        rust: [stable, beta, nightly, 1.83.0]
+        # TODO: add stable and beta when CI has >= 1.83.0 for them
+        rust: [nightly, 1.83.0]
 
     steps:
     - uses: actions/checkout@v4
