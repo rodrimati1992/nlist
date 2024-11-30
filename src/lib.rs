@@ -52,6 +52,11 @@
 //! }
 //! ```
 //!
+//! # Crate features
+//! 
+//! - `"alloc"`(enabled by default): enables methods that take or return [`Vec`] 
+//! 
+//!
 //! # No-std support
 //!
 //! `nlist` is `#![no_std]`, it can be used anywhere Rust can be used.
@@ -63,6 +68,7 @@
 //!
 //! [inline-allocated list]: crate::NList
 //! [`NList`]: crate::NList
+//! [`Vec`]: alloc::vec::Vec
 
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]

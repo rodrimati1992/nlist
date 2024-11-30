@@ -1,0 +1,39 @@
+name: Rust
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      max-parallel: 2
+      matrix:
+        # TODO: add stable and beta when CI has >= 1.83.0 for them
+        rust: [nightly, 1.83.0]
+
+    steps:
+    - uses: actions/checkout@v4
+    - name: Build and tests
+      run: |
+        set -ex
+        rustup override set ${{ matrix.rust }}
+        cargo update
+
+        cargo build --verbose
+        cargo test --verbose
+    
+    - name: UI tests
+      if: ${{ matrix.rust == 'stable' }}
+      run: |
+        set -ex
+        rustup override set ${{ matrix.rust }}
+
+        cargo test --features=__ui 

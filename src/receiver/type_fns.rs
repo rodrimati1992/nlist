@@ -1,5 +1,3 @@
-use typewit::type_fn;
-
 use crate::receiver::{MapReceiver, Receiver};
 
 typewit::type_fn! {
