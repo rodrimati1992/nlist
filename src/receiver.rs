@@ -277,6 +277,28 @@ typewit::type_fn! {
 ////////////////////////////////////////////////////////
 
 /// By reference conversion from `&&T`/`&&mut T`/`&T` to `&T`
+///
+/// # Example 
+///
+/// ```rust
+/// use nlist::receiver::{self, HktApply, Receiver, ReceiverWit};
+/// 
+/// assert_eq!(addup(&(3, 5)), 8);
+/// assert_eq!(addup(&&(5, 8)), 13);
+/// assert_eq!(addup(&&mut (8, 13)), 21);
+/// 
+///
+/// /// Adds up the fields in a `&&(u32, u32)`, `&&mut (u32, u32)`, or `&(u32, u32)`
+/// const fn addup<'a, S>(this: &S) -> u32
+/// where
+///     S: Receiver<'a, (u32, u32)>
+/// {
+///     let pair: &(u32, u32) = receiver::as_ref(this);
+/// 
+///     pair.0 + pair.1
+/// }
+/// ```
+
 pub const fn as_ref<'a, 'b, T>(this: &'b impl Receiver<'a, T>) -> &'b T
 where
     T: 'a,
