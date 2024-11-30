@@ -20,10 +20,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v4
-    - name: Build
-      run: cargo build --verbose
-    - name: Run tests
-      run: cargo test --verbose
-    - name: Run UI tests
+    - name: Build and tests
+      run: |
+        set -ex
+        rustup override set ${{ matrix.rust }}
+        cargo update
+
+        cargo build --verbose
+        cargo test --verbose
+    
+    - name: UI tests
       if: ${{ matrix.rust == 'stable' }}
-      run: cargo test --features=__ui
+      run: |
+        set -ex
+        rustup override set ${{ matrix.rust }}
+
+        cargo test --features=__ui 
