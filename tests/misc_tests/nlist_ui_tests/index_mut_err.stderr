@@ -1,0 +1,33 @@
+error[E0271]: type mismatch resolving `<PlusOne<PlusOne<PlusOne<Zero>>> as PeanoInt>::IsLt<PlusOne<PlusOne<PlusOne<Zero>>>> == Bool<true>`
+ --> tests/misc_tests/nlist_ui_tests/index_mut_err.rs:6:14
+  |
+6 |     _ = list.index::<Peano!(3)>();
+  |              ^^^^^ expected `true`, found `false`
+  |
+  = note: expected struct `Bool<true>`
+             found struct `Bool<false>`
+note: required by a bound in `nlist::nlist::indexing::<impl NList<T, L>>::index`
+ --> src/nlist/indexing.rs
+  |
+  |     pub const fn index<I>(&self) -> &T
+  |                  ----- required by a bound in this associated function
+  |     where
+  |         I: PeanoInt<IsLt<L> = Bool<true>>,
+  |                     ^^^^^^^^^^^^^^^^^^^^ required by this bound in `nlist::nlist::indexing::<impl NList<T, L>>::index`
+
+error[E0271]: type mismatch resolving `<PlusOne<PlusOne<PlusOne<Zero>>> as PeanoInt>::IsLt<PlusOne<PlusOne<PlusOne<Zero>>>> == Bool<true>`
+ --> tests/misc_tests/nlist_ui_tests/index_mut_err.rs:9:14
+  |
+9 |     _ = list.index_mut::<Peano!(3)>();
+  |              ^^^^^^^^^ expected `true`, found `false`
+  |
+  = note: expected struct `Bool<true>`
+             found struct `Bool<false>`
+note: required by a bound in `nlist::nlist::indexing::<impl NList<T, L>>::index_mut`
+ --> src/nlist/indexing.rs
+  |
+  |     pub const fn index_mut<I>(&mut self) -> &mut T
+  |                  --------- required by a bound in this associated function
+  |     where
+  |         I: PeanoInt<IsLt<L> = Bool<true>>,
+  |                     ^^^^^^^^^^^^^^^^^^^^ required by this bound in `nlist::nlist::indexing::<impl NList<T, L>>::index_mut`

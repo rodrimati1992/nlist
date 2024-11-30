@@ -214,7 +214,7 @@ fn from_array_test() {
 
         // infer array generic args from NList
         const LIST: List = NList::from_array(konst::array::from_fn_!(|i| (i + 1) as _));
-        assert_eq!(LIST, nlist![]);
+        assert_eq!(LIST, nlist![] as List);
     }
 
     {

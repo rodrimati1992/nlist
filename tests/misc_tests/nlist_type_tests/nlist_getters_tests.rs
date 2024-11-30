@@ -26,7 +26,7 @@ fn into_node_test() {
 
         const NODE: Cons<u16, Peano!(1)> = into_cons_node(nlist![3u16]);
         assert_eq!(NODE.elem, 3);
-        assert_eq!(NODE.next, nlist![]);
+        assert_eq!(NODE.next, nlist![0u16; 0]);
     }
     {
         assert_type::<Cons<u64, Peano!(2)>>(into_cons_node(nlist![5u64, 8]));

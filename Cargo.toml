@@ -36,3 +36,14 @@ default-features = false
 [dependencies.const_panic]
 version = "0.2"
 default-features = false
+
+[dev-dependencies.trybuild]
+version = "1.0"
+
+
+
+
+
+
+
+

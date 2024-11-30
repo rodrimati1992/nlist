@@ -153,9 +153,12 @@ fn concat_test() {
 
     macro_rules! test_case {
         ([$($elem_a:literal)*] [$($elem_b:literal)*]) => ({
+            let array = [$($elem_a,)* $($elem_b,)*];
+            let _: &[u8] = &array;
+
             assert_eq!(
                 inner::<u8, _, _>(nlist![$($elem_a,)*], nlist![$($elem_b,)*]).into_array(),
-                [$($elem_a,)* $($elem_b,)*]
+                array
             );
         })
     }
