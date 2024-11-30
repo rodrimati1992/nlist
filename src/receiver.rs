@@ -34,6 +34,13 @@ use core::fmt::{self, Debug};
 use typewit::{type_fn, Identity, TypeEq};
 
 
+/// [`typewit::TypeFn`] equivalents of `receiver` type aliases
+pub mod type_fns;
+
+#[doc(no_inline)]
+pub use self::type_fns::*;
+
+
 /// Trait that abstracts over `T`/`&'a T`/`&'a mut T`
 pub trait Receiver<'a, T: 'a>: Sized {
     /// Marker type for abstractly representing values/references/mutable references
@@ -262,20 +269,6 @@ typewit::type_fn! {
 
 ////////////////////////////////////////////////////////
 
-typewit::type_fn! {
-    /// A [`TypeFn`](typewit::TypeFn) version of [`MapReceiver`]
-    /// which takes the receiver type as an argument.
-    pub struct MapReceiverFn<'a, T, U>;
-
-    impl<R> R => MapReceiver<'a, R, T, U>
-    where 
-        R: Receiver<'a, T>,
-        T: 'a,
-        U: 'a;
-}
-
-////////////////////////////////////////////////////////
-
 /// By reference conversion from `&&T`/`&&mut T`/`&T` to `&T`
 ///
 /// # Example 
@@ -298,7 +291,6 @@ typewit::type_fn! {
 ///     pair.0 + pair.1
 /// }
 /// ```
-
 pub const fn as_ref<'a, 'b, T>(this: &'b impl Receiver<'a, T>) -> &'b T
 where
     T: 'a,

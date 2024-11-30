@@ -26,7 +26,7 @@ pub use peano_wit::PeanoWit;
 
 mod from_const;
 
-/// `typewit::TypeFn` equivalents of peano type aliases
+/// [`typewit::TypeFn`] equivalents of peano type aliases
 pub mod type_fns;
 
 #[doc(no_inline)]
