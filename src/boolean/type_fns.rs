@@ -1,7 +1,7 @@
 use crate::PeanoInt;
 use crate::boolean::{self, Boolean};
 
-use crate::macros::internal_macros::declare_type_fn;
+use crate::macros::internal_macros::{alt_fn_docs, declare_type_fn};
 
 declare_type_fn!{ NotFn, boolean, "Not", Boolean::Not<>, Boolean }
 declare_type_fn!{ AndFn, boolean, "And", Boolean::And<R>, Boolean }
@@ -16,28 +16,15 @@ mod nobound {
 }
 use nobound::__NoBound;
 
-
-macro_rules! alt_fn_docs {
-    ($opname:literal) => (
-        concat!(
-            "Type-level function ([`TypeFn`](typewit::TypeFn) implementor) form of [`boolean::",
-            $opname,
-            "`]",
-            " which has the `Then` and `Else` arguments as type parameters of the struct,",
-            " and the condition as a `TypeFn` parameter.",
-        )
-    )
-}
-
 typewit::type_fn!{
-    #[doc = alt_fn_docs!("IfTrue")]
+    #[doc = alt_fn_docs!("boolean", "IfTrue")]
     pub struct IfTrueAltFn<Then, Else>;
 
     impl<B: Boolean> B => boolean::IfTrue<B, Then, Else>
 }
 
 typewit::type_fn!{
-    #[doc = alt_fn_docs!("IfTrueB")]
+    #[doc = alt_fn_docs!("boolean", "IfTrueB")]
     pub struct IfTrueBAltFn<Then, Else>;
 
     impl<B> B => boolean::IfTrueB<B, Then, Else>
@@ -48,7 +35,7 @@ typewit::type_fn!{
 }
 
 typewit::type_fn!{
-    #[doc = alt_fn_docs!("IfTruePI")]
+    #[doc = alt_fn_docs!("boolean", "IfTruePI")]
     pub struct IfTruePIAltFn<Then, Else>;
 
     impl<B> B => boolean::IfTruePI<B, Then, Else>

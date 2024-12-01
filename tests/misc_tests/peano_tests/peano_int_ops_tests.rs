@@ -207,6 +207,16 @@ fn is_le_test() {
 
 #[test]
 fn if_zero_test() {
+    fn _alt_fn_is_equivalent<This, Then, Else>() 
+    where
+        This: PeanoInt,
+    {
+        let _: typewit::TypeEq<
+            typewit::CallFn<peano::IfZeroAltFn<Then, Else>, This>,
+            typewit::CallFn<peano::IfZeroFn, (This, Then, Else)>,
+        > = typewit::TypeEq::NEW;
+    }
+
     test_nonassoc_op! {
         PeanoInt IfZero<A, B> IfZeroFn, Identity -> Identity, peano =>
 
@@ -219,6 +229,18 @@ fn if_zero_test() {
 
 #[test]
 fn if_zero_pi_test() {
+    fn _alt_fn_is_equivalent<This, Then, Else>() 
+    where
+        This: PeanoInt,
+        Then: PeanoInt,
+        Else: PeanoInt,
+    {
+        let _: typewit::TypeEq<
+            typewit::CallFn<peano::IfZeroPIAltFn<Then, Else>, This>,
+            typewit::CallFn<peano::IfZeroPIFn, (This, Then, Else)>,
+        > = typewit::TypeEq::NEW;
+    }
+
     test_nonassoc_op! {
         PeanoInt IfZeroPI<A, B> IfZeroPIFn, PeanoInt -> PeanoInt, peano =>
 

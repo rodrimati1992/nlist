@@ -95,4 +95,21 @@ macro_rules! declare_type_fn {
 } pub(crate) use declare_type_fn;
 
 
+///////////////////////////////////////////////////////////////////////////////
+
+
+macro_rules! alt_fn_docs {
+    ($mod:literal, $opname:literal) => (
+        concat!(
+            "Type-level function ([`TypeFn`](typewit::TypeFn) implementor) form of [`",
+                $mod, "::", $opname,
+            "`]",
+            " which has the `Then` and `Else` arguments as type parameters of the struct,",
+            " and the condition as a `TypeFn` parameter.",
+        )
+    )
+} pub(crate) use alt_fn_docs;
+
+
+///////////////////////////////////////////////////////////////////////////////
 
