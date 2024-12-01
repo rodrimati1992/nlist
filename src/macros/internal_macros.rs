@@ -66,5 +66,33 @@ macro_rules! __parse_closure_2_args {
     };
 }  
 
+///////////////////////////////////////////////////////////////////////////////
+
+macro_rules! declare_type_fn {
+    (
+        $fn_name:ident, 
+        $mod:ident, 
+        $opname:literal, 
+        $this_bound:ident::$op:ident $(<$( $args:ident),* >)?, 
+        $bound:ident 
+    ) => (
+
+        typewit::type_fn! {
+            #[doc = concat!(
+                "Type-level function ([`TypeFn`](typewit::TypeFn) implementor) form of [`",
+                stringify!($mod),
+                "::",
+                $opname,
+                "`]",
+            )]
+            pub struct $fn_name;
+
+            impl<This: $this_bound $($(,$args: $bound)*)?> (This $($(,$args)*)?) => 
+                $mod::$op<This, $($($args,)*)?>;
+        }
+
+    )
+} pub(crate) use declare_type_fn;
+
 
 

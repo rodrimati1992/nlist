@@ -10,6 +10,14 @@ use typewit::{HasTypeWitness, TypeEq};
 
 //////////////////////////////////////////////////////////////////////////////
 
+/// [`typewit::TypeFn`] equivalents of boolean type aliases
+pub mod type_fns;
+
+#[doc(no_inline)]
+pub use self::type_fns::*;
+
+//////////////////////////////////////////////////////////////////////////////
+
 /// Type alias form of [`Boolean::IfTruePI`]
 pub type IfTruePI<B, Then, Else> = <B as Boolean>::IfTruePI<Then, Else>;
 
@@ -97,7 +105,7 @@ pub trait Boolean:
     /// ```
     type IfTrue<Then, Else>;
 
-    /// Equivalent to `IfTrue` but only takes and returns [`Booleans`]s
+    /// Equivalent to `IfTrue` but only takes and returns [`Boolean`]s
     /// 
     /// # Example
     /// 

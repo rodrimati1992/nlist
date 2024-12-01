@@ -49,7 +49,10 @@ macro_rules! test_op {
             assert_type_eq::<$root_path::$type_alias<This $(,$args)*>, Expected>();
       
             crate::misc_tests::test_utils::if_nonempty!{($($typefn)?)
-                assert_type_eq::<CallFn<$root_path::type_fns::$($typefn)?, (This $(,$args)*)>, Expected>();
+                assert_type_eq::<
+                    typewit::CallFn<$root_path::type_fns::$($typefn)?, (This $(,$args)*)>, 
+                    Expected
+                >();
             }
         }
 

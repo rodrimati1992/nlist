@@ -1,36 +1,18 @@
 use crate::peano::{self, PeanoInt};
 
-macro_rules! declare_type_fn {
-    ($fn_name:ident, $opname:literal, $op:ident $(<$( $args:ident),* >)?, $bound:ident ) => (
+use crate::macros::internal_macros::declare_type_fn;
 
-        typewit::type_fn! {
-            #[doc = concat!(
-                "Type-level function ([`TypeFn`] implementor) form of [`peano::",
-                $opname,
-                "`]",
-            )]
-            /// [`TypeFn`]: typewit::TypeFn
-            pub struct $fn_name;
-
-            impl<L: PeanoInt $($(,$args: $bound)*)?> (L $($(,$args)*)?) => 
-                peano::$op<L, $($($args,)*)?>;
-        }
-
-    )
-}
-
-
-declare_type_fn!{ SubOneSatFn, "SubOneSat", SubOneSat, PeanoInt }
-declare_type_fn!{ IsZeroFn, "IsZero", IsZero, PeanoInt }
-declare_type_fn!{ IsLtFn, "IsLt", IsLt<R>, PeanoInt }
-declare_type_fn!{ IsLeFn, "IsLe", IsLe<R>, PeanoInt }
-declare_type_fn!{ IfZeroFn, "IfZero", IfZero<Then, Else>, __NoBound }
-declare_type_fn!{ IfZeroPIFn, "IfZeroPI", IfZeroPI<Then, Else>, PeanoInt }
-declare_type_fn!{ SubSatFn, "SubSat", SubSat<R>, PeanoInt }
-declare_type_fn!{ AddFn, "Add", Add<R>, PeanoInt }
-declare_type_fn!{ MulFn, "Mul", Mul<R>, PeanoInt }
-declare_type_fn!{ MinFn, "Min", Min<R>, PeanoInt }
-declare_type_fn!{ MaxFn, "Max", Max<R>, PeanoInt }
+declare_type_fn!{ SubOneSatFn, peano, "SubOneSat", PeanoInt::SubOneSat, PeanoInt }
+declare_type_fn!{ IsZeroFn, peano, "IsZero", PeanoInt::IsZero, PeanoInt }
+declare_type_fn!{ IsLtFn, peano, "IsLt", PeanoInt::IsLt<R>, PeanoInt }
+declare_type_fn!{ IsLeFn, peano, "IsLe", PeanoInt::IsLe<R>, PeanoInt }
+declare_type_fn!{ IfZeroFn, peano, "IfZero", PeanoInt::IfZero<Then, Else>, __NoBound }
+declare_type_fn!{ IfZeroPIFn, peano, "IfZeroPI", PeanoInt::IfZeroPI<Then, Else>, PeanoInt }
+declare_type_fn!{ SubSatFn, peano, "SubSat", PeanoInt::SubSat<R>, PeanoInt }
+declare_type_fn!{ AddFn, peano, "Add", PeanoInt::Add<R>, PeanoInt }
+declare_type_fn!{ MulFn, peano, "Mul", PeanoInt::Mul<R>, PeanoInt }
+declare_type_fn!{ MinFn, peano, "Min", PeanoInt::Min<R>, PeanoInt }
+declare_type_fn!{ MaxFn, peano, "Max", PeanoInt::Max<R>, PeanoInt }
 
 mod nobound {
     pub trait __NoBound {}
