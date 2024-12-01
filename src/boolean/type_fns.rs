@@ -6,6 +6,7 @@ use crate::macros::internal_macros::{alt_fn_docs, declare_type_fn};
 declare_type_fn!{ NotFn, boolean, "Not", Boolean::Not<>, Boolean }
 declare_type_fn!{ AndFn, boolean, "And", Boolean::And<R>, Boolean }
 declare_type_fn!{ OrFn, boolean, "Or", Boolean::Or<R>, Boolean }
+declare_type_fn!{ XorFn, boolean, "Xor", Boolean::Xor<R>, Boolean }
 declare_type_fn!{ IfTrueFn, boolean, "IfTrue", Boolean::IfTrue<Then, Else>, __NoBound }
 declare_type_fn!{ IfTrueBFn, boolean, "IfTrueB", Boolean::IfTrueB<Then, Else>, Boolean }
 declare_type_fn!{ IfTruePIFn, boolean, "IfTruePI", Boolean::IfTruePI<Then, Else>, PeanoInt }

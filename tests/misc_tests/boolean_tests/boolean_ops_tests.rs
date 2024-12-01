@@ -38,6 +38,17 @@ fn or_test() {
 }
 
 #[test]
+fn xor_test() {
+    test_op! {
+        Boolean::Xor<Rhs> Xor XorFn, Boolean -> Boolean, boolean =>
+        (Bool<false>, Bool<false> => Bool<false>)
+        (Bool<false>, Bool<true> => Bool<true>)
+        (Bool<true>, Bool<false> => Bool<true>)
+        (Bool<true>, Bool<true> => Bool<false>)
+    }
+}
+
+#[test]
 fn iftrue_test() {
     fn _alt_fn_is_equivalent<B, Then, Else>() 
     where

@@ -65,7 +65,6 @@
 //! ```
 //! 
 
-
 use crate::PeanoInt;
 
 
@@ -102,13 +101,21 @@ pub type And<L, R> = <L as Boolean>::And<R>;
 /// Type alias form of [`Boolean::Or`]
 pub type Or<L, R> = <L as Boolean>::Or<R>;
 
+/// Type alias form of [`Boolean::Xor`]
+pub type Xor<L, R> = <L as Boolean>::Xor<R>;
+
 //////////////////////////////////////////////////////////////////////////////
 
 /// Trait for bounding [type-level bools].
 ///
+/// # Example
+///
+/// For an example that (indirectly) uses this trait, 
+/// you can look at the [root module example](crate::boolean#example) 
+///
 /// [type-level bools]: typewit::const_marker::Bool
 pub trait Boolean: 
-    Copy + Clone + core::fmt::Debug + Send + Sync +
+    Copy + Clone + core::fmt::Debug + Send + Sync + 'static +
     HasTypeWitness<BoolWitG<Self>>
 {
     /// Logical negation
@@ -138,7 +145,7 @@ pub trait Boolean:
     /// 
     /// ```
     type And<Rhs: Boolean>: Boolean;
-    
+
     /// Logical or
     /// 
     /// # Example
@@ -153,6 +160,21 @@ pub trait Boolean:
     /// 
     /// ```
     type Or<Rhs: Boolean>: Boolean;
+
+    /// Exclusive or
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::Xor<Bool<false>, Bool<false>> = Bool::<false>;
+    /// let _: boolean::Xor<Bool<false>, Bool<true>> = Bool::<true>;
+    /// let _: boolean::Xor<Bool<true>, Bool<false>> = Bool::<true>;
+    /// let _: boolean::Xor<Bool<true>, Bool<true>> = Bool::<false>;
+    /// 
+    /// ```
+    type Xor<Rhs: Boolean>: Boolean;
 
     /// Evaluates to different types depending on the type of `Self`:
     /// - if `Self == Bool<true>`: evaluates to `Then`
@@ -213,6 +235,8 @@ impl Boolean for Bool<false> {
     
     type Or<Rhs: Boolean> = Rhs;
 
+    type Xor<Rhs: Boolean> = Rhs;
+
     type IfTrue<Then, Else> = Else;
 
     type IfTruePI<Then: PeanoInt, Else: PeanoInt> = Else;
@@ -226,6 +250,8 @@ impl Boolean for Bool<true> {
     type And<Rhs: Boolean> = Rhs;
     
     type Or<Rhs: Boolean> = Bool<true>;
+
+    type Xor<Rhs: Boolean> = Rhs::Not;
 
     type IfTrue<Then, Else> = Then;
 
