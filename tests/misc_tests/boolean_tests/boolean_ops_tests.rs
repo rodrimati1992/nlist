@@ -50,6 +50,17 @@ fn iftrue_test() {
 }
 
 #[test]
+fn iftrueb_test() {
+    test_op! {
+        Boolean::IfTrueB<Then, Else> IfTrueB, Boolean -> Boolean, boolean =>
+        (Bool<false>, Bool<false>, Bool<true> => Bool<true>)
+        (Bool<false>, Bool<true>, Bool<false> => Bool<false>)
+        (Bool<true>, Bool<false>, Bool<true> => Bool<false>)
+        (Bool<true>, Bool<true>, Bool<false> => Bool<true>)
+    }
+}
+
+#[test]
 fn iftruepi_test() {
     test_op! {
         Boolean::IfTruePI<Then, Else> IfTruePI, PeanoInt -> PeanoInt, boolean =>

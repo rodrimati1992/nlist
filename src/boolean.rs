@@ -13,6 +13,9 @@ use typewit::{HasTypeWitness, TypeEq};
 /// Type alias form of [`Boolean::IfTruePI`]
 pub type IfTruePI<B, Then, Else> = <B as Boolean>::IfTruePI<Then, Else>;
 
+/// Type alias form of [`Boolean::IfTrueB`]
+pub type IfTrueB<B, Then, Else> = <B as Boolean>::IfTrueB<Then, Else>;
+
 /// Type alias form of [`Boolean::IfTrue`]
 pub type IfTrue<B, Then, Else> = <B as Boolean>::IfTrue<Then, Else>;
 
@@ -27,26 +30,102 @@ pub type Or<L, R> = <L as Boolean>::Or<R>;
 
 //////////////////////////////////////////////////////////////////////////////
 
-/// Marker trait for [`typewit::const_marker::Bool`]
+/// Trait for bounding [type-level bools].
+///
+/// [type-level bools]: typewit::const_marker::Bool
 pub trait Boolean: 
     Copy + Clone + core::fmt::Debug + Send + Sync +
     HasTypeWitness<BoolWitG<Self>>
 {
     /// Logical negation
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::Not<Bool<false>> = Bool::<true>;
+    /// let _: boolean::Not<Bool<true>> = Bool::<false>;
+    /// 
+    /// ```
     type Not: Boolean<Not = Self>;
 
     /// Logical and
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::And<Bool<false>, Bool<false>> = Bool::<false>;
+    /// let _: boolean::And<Bool<false>, Bool<true>> = Bool::<false>;
+    /// let _: boolean::And<Bool<true>, Bool<false>> = Bool::<false>;
+    /// let _: boolean::And<Bool<true>, Bool<true>> = Bool::<true>;
+    /// 
+    /// ```
     type And<Rhs: Boolean>: Boolean;
     
     /// Logical or
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::Or<Bool<false>, Bool<false>> = Bool::<false>;
+    /// let _: boolean::Or<Bool<false>, Bool<true>> = Bool::<true>;
+    /// let _: boolean::Or<Bool<true>, Bool<false>> = Bool::<true>;
+    /// let _: boolean::Or<Bool<true>, Bool<true>> = Bool::<true>;
+    /// 
+    /// ```
     type Or<Rhs: Boolean>: Boolean;
 
     /// Evaluates to different types depending on the type of `Self`:
     /// - if `Self == Bool<true>`: evaluates to `Then`
     /// - if `Self == Bool<false>`: evaluates to `Else`
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::IfTrue<Bool<false>, u8, u16> = 3u16;
+    /// let _: boolean::IfTrue<Bool<false>, u32, u64> = 5u64;
+    /// let _: boolean::IfTrue<Bool<true>, u8, u16> = 8u8;
+    /// let _: boolean::IfTrue<Bool<true>, u32, u64> = 13u32;
+    /// 
+    /// ```
     type IfTrue<Then, Else>;
 
+    /// Equivalent to `IfTrue` but only takes and returns [`Booleans`]s
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::IfTrue<Bool<false>, Bool<false>, Bool<true>> = Bool::<true>;
+    /// let _: boolean::IfTrue<Bool<false>, Bool<true>, Bool<false>> = Bool::<false>;
+    /// let _: boolean::IfTrue<Bool<true>, Bool<false>, Bool<true>> = Bool::<false>;
+    /// let _: boolean::IfTrue<Bool<true>, Bool<true>, Bool<false>> = Bool::<true>;
+    /// 
+    /// ```
+    type IfTrueB<Then: Boolean, Else: Boolean>: Boolean;
+
     /// Equivalent to `IfTrue` but only takes and returns [`PeanoInt`]s
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{Peano, peano};
+    /// use nlist::boolean::{self, Bool};
+    /// 
+    /// let _: boolean::IfTrue<Bool<false>, Peano!(3), Peano!(5)> = peano!(5);
+    /// let _: boolean::IfTrue<Bool<false>, Peano!(8), Peano!(13)> = peano!(13);
+    /// let _: boolean::IfTrue<Bool<true>, Peano!(3), Peano!(5)> = peano!(3);
+    /// let _: boolean::IfTrue<Bool<true>, Peano!(8), Peano!(13)> = peano!(8);
+    /// 
+    /// ```
     type IfTruePI<Then: PeanoInt, Else: PeanoInt>: PeanoInt;
 
     /// Witness for whether `Self` is `Bool<false>` or `Bool<true>`
@@ -63,6 +142,8 @@ impl Boolean for Bool<false> {
     type IfTrue<Then, Else> = Else;
 
     type IfTruePI<Then: PeanoInt, Else: PeanoInt> = Else;
+
+    type IfTrueB<Then: Boolean, Else: Boolean> = Else;
 }
 
 impl Boolean for Bool<true> {
@@ -75,6 +156,8 @@ impl Boolean for Bool<true> {
     type IfTrue<Then, Else> = Then;
 
     type IfTruePI<Then: PeanoInt, Else: PeanoInt> = Then;
+
+    type IfTrueB<Then: Boolean, Else: Boolean> = Then;
 }
 
 
