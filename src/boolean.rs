@@ -1,4 +1,70 @@
 //! Traits and operations for type-level booleans
+//! 
+//! # Example
+//! 
+//! Returning different types depending on a type-level condition.
+//! 
+//! ```rust
+//! use nlist::{PeanoInt, Peano, peano};
+//! use nlist::boolean::{self, Bool, Boolean, BoolWitG};
+//! use nlist::typewit::{CallFn, TypeEq};
+//! 
+//! assert_eq!(make(peano!(0)), "zero");
+//! assert_eq!(make(peano!(1)), "one");
+//! assert_eq!(make(peano!(2)), "two");
+//! assert_eq!(make(peano!(3)), 3);
+//! assert_eq!(make(peano!(4)), 4);
+//! 
+//! // Function which returns different types depending on the value of `L`
+//! // 
+//! // If L < 3, this returns a &'static str
+//! // If L >= 3, this returns a usize
+//! // 
+//! // The `-> CallFn<StrOrUsize, Lt3<L>>` return type calls the `StrOrUsize` type-level function 
+//! // with `Lt3<L>` as an argument.
+//! const fn make<L: PeanoInt>(_: L) -> CallFn<StrOrUsize, Lt3<L>> {
+//!     match Lt3::<L>::BOOL_WIT {
+//!         // lt_te is a proof that `Lt3<L> == Bool<true>`, i.e.: L < 3 == true
+//!         // lt_te: TypeEq<Lt3<L>, Bool<true>>
+//!         BoolWitG::True(lt_te) => {
+//!             // te is a proof that `CallFn<StrOrUsize, Lt3<L>> == &'static str`
+//!             let te: TypeEq<CallFn<StrOrUsize, Lt3<L>>, &'static str> = 
+//!                 lt_te.project::<StrOrUsize>();
+//!
+//!             te.to_left(match L::USIZE {
+//!                 0 => "zero",
+//!                 1 => "one",
+//!                 2 => "two",
+//!                 _ => panic!("unreachable"),
+//!             })
+//!         }
+//! 
+//!         // gt_te is a proof that `Lt3<L> == Bool<false>`, i.e.: L < 3 == false
+//!         // gt_te: TypeEq<Lt3<L>, Bool<false>>
+//!         BoolWitG::False(gt_te) => {
+//!             // te is a proof that `CallFn<StrOrUsize, Lt3<L>> == usize`
+//!             let te: TypeEq<CallFn<StrOrUsize, Lt3<L>>, usize> = gt_te.project::<StrOrUsize>();
+//!
+//!             te.to_left(L::USIZE)
+//!         }
+//!     }
+//! }
+//! 
+//! // Evaluates to `nlist::boolean::Bool<L < 3>`
+//! type Lt3<L> = peano::IsLt<L, Peano!(3)>;
+//! 
+//! // StrOrUsize is a type-level function (`typewit::TypeFn` implementor),
+//! // which takes a Boolean parameter.
+//! // 
+//! // In pseudocode, this is what it does on the type level:
+//! // fn StrOrUsize(B: Boolean) -> type {
+//! //      if B { &'static str } else { usize }  
+//! // }
+//! type StrOrUsize = boolean::IfTrueAltFn<&'static str, usize>;
+//! 
+//! ```
+//! 
+
 
 use crate::PeanoInt;
 

@@ -13,7 +13,7 @@ use crate::peano::{PeanoInt, PlusOne, Zero};
 /// 
 /// ```rust
 /// use nlist::{PeanoInt, PeanoWit, Peano, peano};
-/// use nlist::typewit::{CallFn, TypeEq, type_fn};
+/// use nlist::typewit::{CallFn, TypeEq};
 /// 
 /// assert_eq!(make::<Peano!(0)>(), "hello");
 /// assert_eq!(make::<Peano!(1)>(), 0);
@@ -26,40 +26,38 @@ use crate::peano::{PeanoInt, PlusOne, Zero};
 /// // If L == 0, this returns a &'static str
 /// // If L > 0, this returns a usize
 /// // 
-/// // The `-> CallFn<StrOrU8, L>` return type calls the `StrOrU8` type-level function 
+/// // The `-> CallFn<StrOrUsize, L>` return type calls the `StrOrUsize` type-level function 
 /// // with `L` as an argument.
-/// const fn make<L: PeanoInt>() -> CallFn<StrOrU8, L> {
+/// const fn make<L: PeanoInt>() -> CallFn<StrOrUsize, L> {
 ///     match L::PEANO_WIT {
 ///         // len_te is a proof that `L == PlusOne<L::SubOneSat>`
 ///         // len_te: TypeEq<L, PlusOne<L::SubOneSat>>
 ///         PeanoWit::PlusOne(len_te) => {
-///             // te is a proof that `CallFn<StrOrU8, L> == usize`
-///             let te: TypeEq<CallFn<StrOrU8, L>, usize> = len_te.project::<StrOrU8>();
+///             // te is a proof that `CallFn<StrOrUsize, L> == usize`
+///             let te: TypeEq<CallFn<StrOrUsize, L>, usize> = len_te.project::<StrOrUsize>();
 ///             te.to_left(<L::SubOneSat>::USIZE)
 ///         }
 /// 
 ///         // len_te is a proof that `L == Zero`
 ///         // len_te: TypeEq<L, Zero>
 ///         PeanoWit::Zero(len_te) => {
-///             // te is a proof that `CallFn<StrOrU8, L> == &'static str`
-///             let te: TypeEq<CallFn<StrOrU8, L>, &'static str> = len_te.project::<StrOrU8>();
+///             // te is a proof that `CallFn<StrOrUsize, L> == &'static str`
+///             let te: TypeEq<CallFn<StrOrUsize, L>, &'static str> = 
+///                 len_te.project::<StrOrUsize>();
+///
 ///             te.to_left("hello")
 ///         }
 ///     }
 /// }
 /// 
-/// 
-/// type_fn! {
-///     // StrOrU8 is a type-level function (`typewit::TypeFn` implementor) 
-///     // 
-///     // In pseudocode, this is what it does on the type level:
-///     // fn StrOrU8(L: PeanoInt) -> type {
-///     //      if L == 0 { &'static str } else { usize }  
-///     // }
-///     struct StrOrU8;
-/// 
-///     impl<L: PeanoInt> L => peano::IfZero<L, &'static str, usize>
-/// }
+/// // StrOrUsize is a type-level function (`typewit::TypeFn` implementor),
+/// // which takes a PeanoInt parameter.
+/// // 
+/// // In pseudocode, this is what it does on the type level:
+/// // fn StrOrUsize(L: PeanoInt) -> type {
+/// //      if L == 0 { &'static str } else { usize }  
+/// // }
+/// type StrOrUsize = peano::IfZeroAltFn<&'static str, usize>;
 /// 
 /// ```
 pub enum PeanoWit<L: PeanoInt> {
