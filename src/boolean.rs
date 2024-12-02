@@ -1,11 +1,16 @@
 //! Traits and operations for type-level booleans
 //! 
+//! The operators on this type-level boolean representation are
+//! implemented as associated types on the [`Boolean`] trait,
+//! and don't require bounds other than `Boolean` to use them.
+//! 
 //! # Example
 //! 
 //! Returning different types depending on a type-level condition.
 //! 
 //! ```rust
 //! use nlist::{PeanoInt, Peano, peano};
+//! use nlist::peano::IsLt;
 //! use nlist::boolean::{self, Bool, Boolean, BoolWitG};
 //! use nlist::typewit::{CallFn, TypeEq};
 //! 
@@ -20,17 +25,21 @@
 //! // If L < 3, this returns a &'static str
 //! // If L >= 3, this returns a usize
 //! // 
-//! // The `-> CallFn<StrOrUsize, Lt3<L>>` return type calls the `StrOrUsize` type-level function 
-//! // with `Lt3<L>` as an argument.
-//! const fn make<L: PeanoInt>(_: L) -> CallFn<StrOrUsize, Lt3<L>> {
-//!     match Lt3::<L>::BOOL_WIT {
-//!         // lt_te is a proof that `Lt3<L> == Bool<true>`, i.e.: L < 3 == true
-//!         // lt_te: TypeEq<Lt3<L>, Bool<true>>
+//! // The `-> CallFn<StrOrUsize, IsLt<L, Peano!(3)>>` return type calls the `StrOrUsize` 
+//! // type-level function with `IsLt<L, Peano!(3)>` as an argument.
+//! // 
+//! // `IsLt<L, Peano!(3)>` effectively evaluates to `Bool<{L::USIZE < 3}>`
+//! const fn make<L: PeanoInt>(_: L) -> CallFn<StrOrUsize, IsLt<L, Peano!(3)>> {
+//!     // Making a `BoolWitG<IsLt<L, Peano!(3)>>` with `Boolean::BOOL_WIT`
+//!     match IsLt::<L, Peano!(3)>::BOOL_WIT {
+//!         // lt_te is a proof that `IsLt<L, Peano!(3)> == Bool<true>`, i.e.: L < 3 == true
+//!         // lt_te: TypeEq<IsLt<L, Peano!(3)>, Bool<true>>
 //!         BoolWitG::True(lt_te) => {
-//!             // te is a proof that `CallFn<StrOrUsize, Lt3<L>> == &'static str`
-//!             let te: TypeEq<CallFn<StrOrUsize, Lt3<L>>, &'static str> = 
+//!             // te is a proof that `CallFn<StrOrUsize, IsLt<L, Peano!(3)>> == &'static str`
+//!             let te: TypeEq<CallFn<StrOrUsize, IsLt<L, Peano!(3)>>, &'static str> = 
 //!                 lt_te.project::<StrOrUsize>();
 //!
+//!             // using the type equality proof to coerce `&'static str` to the return type.
 //!             te.to_left(match L::USIZE {
 //!                 0 => "zero",
 //!                 1 => "one",
@@ -39,19 +48,18 @@
 //!             })
 //!         }
 //! 
-//!         // gt_te is a proof that `Lt3<L> == Bool<false>`, i.e.: L < 3 == false
-//!         // gt_te: TypeEq<Lt3<L>, Bool<false>>
-//!         BoolWitG::False(gt_te) => {
-//!             // te is a proof that `CallFn<StrOrUsize, Lt3<L>> == usize`
-//!             let te: TypeEq<CallFn<StrOrUsize, Lt3<L>>, usize> = gt_te.project::<StrOrUsize>();
+//!         // ge_te is a proof that `IsLt<L, Peano!(3)> == Bool<false>`, i.e.: L < 3 == false
+//!         // ge_te: TypeEq<IsLt<L, Peano!(3)>, Bool<false>>
+//!         BoolWitG::False(ge_te) => {
+//!             // te is a proof that `CallFn<StrOrUsize, IsLt<L, Peano!(3)>> == usize`
+//!             let te: TypeEq<CallFn<StrOrUsize, IsLt<L, Peano!(3)>>, usize> = 
+//!                 ge_te.project::<StrOrUsize>();
 //!
+//!             // using the type equality proof to coerce `usize` to the return type.
 //!             te.to_left(L::USIZE)
 //!         }
 //!     }
 //! }
-//! 
-//! // Evaluates to `nlist::boolean::Bool<L < 3>`
-//! type Lt3<L> = peano::IsLt<L, Peano!(3)>;
 //! 
 //! // StrOrUsize is a type-level function (`typewit::TypeFn` implementor),
 //! // which takes a Boolean parameter.
@@ -111,7 +119,7 @@ pub type Xor<L, R> = <L as Boolean>::Xor<R>;
 /// # Example
 ///
 /// For an example that (indirectly) uses this trait, 
-/// you can look at the [root module example](crate::boolean#example) 
+/// you can look at the [module-level example](crate::boolean#example) 
 ///
 /// [type-level bools]: typewit::const_marker::Bool
 pub trait Boolean: 

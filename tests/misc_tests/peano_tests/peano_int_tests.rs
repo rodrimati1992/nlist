@@ -91,36 +91,6 @@ fn eq_test() {
     }
 }
 
-#[test]
-fn check_le_test(){
-    macro_rules! test_cases {
-        ($(($l:literal $r:literal $is_le:tt))*) => ($({
-            type L = Peano!($l);
-            type R = Peano!($r);
-
-            assert_type::<BoolWitG<peano::IsLe<L, R>>>(peano::check_le::<L, R>());
-
-            let ret = peano::check_le::<L, R>();
-
-            assert_eq!(
-                matches!(ret, BoolWitG::True{..}),
-                $is_le,
-                "{} {ret:?} {} {}",
-                $is_le,
-                L::USIZE,
-                R::USIZE,
-            );
-        })*)
-    }
-
-    test_cases!{
-        (0 0 true ) (0 1 true ) (0 2 true ) (0 3 true ) (0 4 true) 
-        (1 0 false) (1 1 true ) (1 2 true ) (1 3 true ) (1 4 true) 
-        (2 0 false) (2 1 false) (2 2 true ) (2 3 true ) (2 4 true) 
-        (3 0 false) (3 1 false) (3 2 false) (3 3 true ) (3 4 true) 
-        (4 0 false) (4 1 false) (4 2 false) (4 3 false) (4 4 true) 
-    }
-}
 
 
 

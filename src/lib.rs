@@ -1,4 +1,6 @@
-//! Provides an [inline-allocated list] which statically tracks its length.
+//! Provides an [inline-allocated list] which statically tracks its length,
+//! and type-based [integer]/[boolean] representations which 
+//! don't require (additional) bounds for operators.
 //!
 //! # Example
 //!
@@ -25,30 +27,27 @@
 //! {
 //!     // if we use `let` to destructure instead of `konst::destructure`,
 //!     // we get a "destructor cannot be evaluated at compile-time" error as of Rust 1.83
-//!     konst::destructure!{(mut before, after) = list.split_at::<SplitIndex>()}
-//!     
-//!     let mut array = before.into_array();
-//!     mutate_array(&mut array);
-//!     before = NList::from_array(array);
+//!     konst::destructure!{(before, after) = list.split_at::<SplitIndex>()}
 //!     
 //!     // math spice: using arithmetic properties to coerce equal generic lengths.
 //!     // 
 //!     // Alternatively, you can pass  `peano::eq().unwrap_eq()` to `coerce_len`
 //!     // for an easier, but panic prone, approach:
 //!     // ```
-//!     // return after.concat(before).coerce_len(peano::eq().unwrap_eq())
+//!     // return after.concat(map_add_100(before)).coerce_len(peano::eq().unwrap_eq())
 //!     // ```
 //!     // 
 //!     // coercing `NList<u128, L - 0>` to `NList<u128, L>`
 //!     let coerced_after = after.coerce_len(peano::proofs::sub_identity::<L>());
 //! 
-//!     coerced_after.concat(before)
+//!     coerced_after.concat(map_add_100(before))
 //!         // coercing `NList<u128, L + SplitIndex>` to `NList<u128, SplitIndex + L>`
 //!         .coerce_len(peano::proofs::commutative_add::<L, SplitIndex>())
 //! }
 //! 
-//! const fn mutate_array(array: &mut [u128; SplitIndex::USIZE]) {
-//!     *array = konst::array::map_!(*array, |x| 100 + x);
+//! // Adds 100 to all elemenst of an NList
+//! const fn map_add_100<L: PeanoInt>(list: NList<u128, L>) -> NList<u128, L> {
+//!     nlist::rec_map!(list, |elem, rest| (elem + 100, map_add_100(rest)))
 //! }
 //! ```
 //!
@@ -67,6 +66,8 @@
 //!
 //!
 //! [inline-allocated list]: crate::NList
+//! [integer]: crate::peano::PeanoInt  
+//! [boolean]: crate::boolean::Boolean 
 //! [`NList`]: crate::NList
 //! [`Vec`]: alloc::vec::Vec
 

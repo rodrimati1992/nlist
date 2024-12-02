@@ -6,18 +6,18 @@
 //! 
 //! # Example
 //! 
-//! Constructing an NList that's `A * B + C` large.
+//! Constructing an NList that's `A * B + C` long.
 //! 
 //! ```rust
 //! use nlist::{NList, Peano, PeanoInt, peano, nlist};
 //! 
-//! // 3 * 0 + 1 == 1
+//! // returned list length: 3 * 0 + 1 == 1
 //! assert_eq!(make_nlist::<Peano!(3), Peano!(0), Peano!(1)>(), nlist![0]);
 //! 
-//! // 2 * 1 + 3 == 5
+//! // returned list length: 2 * 1 + 3 == 5
 //! assert_eq!(make_nlist::<Peano!(2), Peano!(1), Peano!(3)>(), nlist![0, 1, 4, 9, 16]);
 //! 
-//! // 3 * 2 + 1 == 7
+//! // returned list length: 3 * 2 + 1 == 7
 //! assert_eq!(make_nlist::<Peano!(3), Peano!(2), Peano!(1)>(), nlist![0, 1, 4, 9, 16, 25, 36]);
 //! 
 //! // makes an NList<u64, A * B + C>
@@ -27,6 +27,7 @@
 //!     B: PeanoInt,
 //!     C: PeanoInt,
 //! {
+//!     // the recursive function that constructs the list
 //!     const fn inner<L: PeanoInt>(index: u64) -> NList<u64, L> {
 //!         nlist::rec_from_fn!(|| (index.pow(2), inner(index + 1)))
 //!     }
@@ -145,7 +146,7 @@ pub type IsLt<Lhs, Rhs> = <Lhs as PeanoInt>::IsLt<Rhs>;
 
 
 
-/// Trait for peano numbers, a type-level encoding of unsigned integers.
+/// Trait for a type-level unary encoding of unsigned integers.
 /// 
 /// Only [`Zero`] and [`PlusOne`] implement this trait,
 /// no other type can implement it.
@@ -229,6 +230,19 @@ pub trait PeanoInt:
     type __PairOfPeanos<R: PeanoInt>: PeanoCmpWit<L = Self, R = R>;
 
     /// Whether `Self` is Zero
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{PeanoInt, Peano, peano};
+    /// use nlist::boolean::Bool;
+    /// 
+    /// let _: peano::IsZero<Peano!(0)> = Bool::<true>;
+    /// let _: peano::IsZero<Peano!(1)> = Bool::<false>;
+    /// let _: peano::IsZero<Peano!(2)> = Bool::<false>;
+    /// let _: peano::IsZero<Peano!(3)> = Bool::<false>;
+    /// 
+    /// ```
     type IsZero: Boolean;
 
     /// Type level equivalent of `.saturating_sub(R)`
@@ -238,15 +252,11 @@ pub trait PeanoInt:
     /// ```rust
     /// use nlist::{PeanoInt, Peano, peano};
     /// 
-    /// const fn subsat<Rhs: PeanoInt>() -> impl PeanoInt {
-    ///     peano::SubSat::<Peano!(3), Rhs>::NEW
-    /// }
-    /// 
-    /// assert_eq!(subsat::<Peano!(0)>(), 3);
-    /// assert_eq!(subsat::<Peano!(1)>(), 2);
-    /// assert_eq!(subsat::<Peano!(2)>(), 1);
-    /// assert_eq!(subsat::<Peano!(3)>(), 0);
-    /// assert_eq!(subsat::<Peano!(4)>(), 0);
+    /// assert_eq!(peano::SubSat::<Peano!(3), Peano!(0)>::NEW, 3);
+    /// assert_eq!(peano::SubSat::<Peano!(3), Peano!(1)>::NEW, 2);
+    /// assert_eq!(peano::SubSat::<Peano!(3), Peano!(2)>::NEW, 1);
+    /// assert_eq!(peano::SubSat::<Peano!(3), Peano!(3)>::NEW, 0);
+    /// assert_eq!(peano::SubSat::<Peano!(3), Peano!(4)>::NEW, 0);
     /// ```
     type SubSat<R: PeanoInt>: PeanoInt;
 
@@ -338,9 +348,49 @@ pub trait PeanoInt:
     type Max<Rhs: PeanoInt>: PeanoInt;
 
     /// Whether `Self < Rhs`
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{Peano, peano};
+    /// use nlist::boolean::Bool;
+    /// 
+    /// let _: peano::IsLt<Peano!(0), Peano!(0)> = Bool::<false>;
+    /// let _: peano::IsLt<Peano!(0), Peano!(1)> = Bool::<true>;
+    /// let _: peano::IsLt<Peano!(0), Peano!(2)> = Bool::<true>;
+    /// 
+    /// let _: peano::IsLt<Peano!(1), Peano!(0)> = Bool::<false>;
+    /// let _: peano::IsLt<Peano!(1), Peano!(1)> = Bool::<false>;
+    /// let _: peano::IsLt<Peano!(1), Peano!(2)> = Bool::<true>;
+    /// 
+    /// let _: peano::IsLt<Peano!(2), Peano!(0)> = Bool::<false>;
+    /// let _: peano::IsLt<Peano!(2), Peano!(1)> = Bool::<false>;
+    /// let _: peano::IsLt<Peano!(2), Peano!(2)> = Bool::<false>;
+    /// 
+    /// ```
     type IsLt<Rhs: PeanoInt>: Boolean;
 
     /// Whether `Self <= Rhs`
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{Peano, peano};
+    /// use nlist::boolean::Bool;
+    /// 
+    /// let _: peano::IsLe<Peano!(0), Peano!(0)> = Bool::<true>;
+    /// let _: peano::IsLe<Peano!(0), Peano!(1)> = Bool::<true>;
+    /// let _: peano::IsLe<Peano!(0), Peano!(2)> = Bool::<true>;
+    /// 
+    /// let _: peano::IsLe<Peano!(1), Peano!(0)> = Bool::<false>;
+    /// let _: peano::IsLe<Peano!(1), Peano!(1)> = Bool::<true>;
+    /// let _: peano::IsLe<Peano!(1), Peano!(2)> = Bool::<true>;
+    /// 
+    /// let _: peano::IsLe<Peano!(2), Peano!(0)> = Bool::<false>;
+    /// let _: peano::IsLe<Peano!(2), Peano!(1)> = Bool::<false>;
+    /// let _: peano::IsLe<Peano!(2), Peano!(2)> = Bool::<true>;
+    /// 
+    /// ```
     type IsLe<Rhs: PeanoInt>: Boolean;
 
     /// Constructs this type
@@ -348,7 +398,7 @@ pub trait PeanoInt:
     /// # Example
     /// 
     /// ```rust
-    /// use nlist::{PeanoInt, Peano, peano};
+    /// use nlist::{PeanoInt, Peano};
     /// 
     /// let int = <Peano!(2)>::NEW;
     /// 
@@ -361,7 +411,7 @@ pub trait PeanoInt:
     /// # Example
     /// 
     /// ```rust
-    /// use nlist::{PeanoInt, Peano, peano};
+    /// use nlist::{PeanoInt, Peano};
     /// 
     /// assert_eq!(<Peano!(3)>::USIZE, 3);
     /// assert_eq!(<Peano!(5)>::USIZE, 5);
@@ -505,18 +555,6 @@ where
 {
     PairOfPeanos_::<L, R>::EQ_WIT
 }
-
-/// Returns a [`BoolWitG`] proof of whether `L <= R` is true.
-/// 
-pub const fn check_le<L, R>() -> BoolWitG<L::IsLe<R>>
-where
-    L: PeanoInt,
-    R: PeanoInt,
-{
-    Boolean::BOOL_WIT
-}
-
-
 
 const fn zero_one_inequality<L: PeanoInt>() -> TypeNe<Zero, PlusOne<L>> {
     typewit::type_ne!(<L: PeanoInt> Zero, PlusOne<L>)

@@ -1,4 +1,55 @@
 //! Contains proofs of arithmetic properties of [`PeanoInt`]s
+//! 
+//! These properties are useful in generic contexts, where the compiler does no
+//! reasoning WRT the arithmetic properties of [`PeanoInt`]s. 
+//! 
+//! # Alternative
+//! 
+//! An easier approach is to use [`peano::eq`]`::<foo, bar>().unwrap_eq()`,
+//! but this is prone to causing panics if `foo` or `bar` might change to become unequal.
+//! (the proof approach is completely panic-free, though)
+//! 
+//! # Example
+//! 
+//! Defining a version of [`NList::flatten`](crate::NList::flatten) function that returns 
+//! ```rust
+//! # use nlist::{NList, Peano, peano}; 
+//! # type T = ();
+//! # type LOuter = Peano!(0);
+//! # type LInner = Peano!(0);
+//! # let _: 
+//! NList<T, peano::Mul<LInner, LOuter>>
+//! # ;
+//! ```
+//! instead of
+//! ```rust
+//! # use nlist::{NList, Peano, peano}; 
+//! # type T = ();
+//! # type LOuter = Peano!(0);
+//! # type LInner = Peano!(0);
+//! # let _: 
+//! NList<T, peano::Mul<LOuter, LInner>>
+//! # ;
+//! ```
+//! 
+//! ```rust
+//! use nlist::{NList, NList2D, PeanoInt, nlist, peano};
+//! 
+//! 
+//! const fn flatten_comm<T, LOuter, LInner>(
+//!     list: NList2D<T, LOuter, LInner>,
+//! ) -> NList<T, peano::Mul<LInner, LOuter>>
+//! where   
+//!     LOuter: PeanoInt,
+//!     LInner: PeanoInt,
+//! {
+//!     let flat: NList<T, peano::Mul<LOuter, LInner>> = list.flatten();
+//!     
+//!     flat.coerce_len(peano::proofs::commutative_mul::<LOuter, LInner>())
+//! }
+//! 
+//! ```
+//! [`peano::eq`]: crate::peano::eq
 
 use super::*;
 
