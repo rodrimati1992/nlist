@@ -6,7 +6,7 @@ don't require (additional) bounds for operators.
 
 ### Splitting and recombining
 
-This example shows how NLists can be split and recombined in const,
+This example shows how [`NList`]s can be split and recombined in const,
 even if the length is generic, 
 so long as the length is known to be greater than the split index.
 
@@ -64,13 +64,8 @@ const fn map_add_100<L: PeanoInt>(list: NList<u128, L>) -> NList<u128, L> {
 `nlist` requires Rust 1.83.0.
 
 
-[inline-allocated list]: crate::NList
-[`NList`]: crate::NList
-
-
-
 [inline-allocated list]: https://docs.rs/nlist/latest/nlist/nlist/struct.NList.html  
-[NList]: https://docs.rs/nlist/latest/nlist/nlist/struct.NList.html  
+[`NList`]: https://docs.rs/nlist/latest/nlist/nlist/struct.NList.html  
 [integer]: https://docs.rs/nlist/latest/nlist/peano/trait.PeanoInt.html  
 [boolean]: https://docs.rs/nlist/latest/nlist/boolean/trait.Boolean.html  
 [`Vec`]: https://doc.rust-lang.org/std/vec/struct.Vec.html
