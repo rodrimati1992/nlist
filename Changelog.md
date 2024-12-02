@@ -7,19 +7,20 @@ Added these items in the root module:
 - `Nil` struct
 - `NList` struct
 - `NListFn` struct (`::typewit::TypeFn` implementor)
-. `NList2D` type alias
-. `nlist` macro
-. `nlist_pat` macro
-. `Node` type alias
-. `Peano` macro
-. `peano` macro
-. `rec_all` macro
-. `rec_any` macro
-. `rec_find_map` macro
-. `rec_fold` macro
-. `rec_for_each` macro
-. `rec_from_fn` macro
-. `rec_map` macro
+- `NList2D` type alias
+- `nlist` macro
+- `nlist_pat` macro
+- `Node` type alias
+- `Peano` macro
+- `peano` macro
+- `rec_all` macro
+- `rec_any` macro
+- `rec_find_map` macro
+- `rec_fold` macro
+- `rec_for_each` macro
+- `rec_from_fn` macro
+- `rec_map` macro
+- `unlist` macro
 - reexport of `typewit`
 
 Added `boolean` module with these items:
@@ -42,8 +43,6 @@ Added `boolean` module with these items:
 - `type_fns::NotFn` struct
 - `type_fns::OrFn` struct
 - `type_fns::XorFn` struct
-
-
 
 Added `peano` module with these items:
 - `Add` type alias
@@ -104,7 +103,6 @@ Added `receiver` module with these items:
 - `ValueHkt` struct
 - `type_fns::MapReceiverFn` struct (`::typewit::TypeFn` implementor)
 - reexports of `::nlist::receiver::type_fns::*`
-
 
 Added "alloc" crate feature
 

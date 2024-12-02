@@ -1,0 +1,8 @@
+error[E0493]: destructor of `NList<T, nlist::PlusOne<nlist::PlusOne<L>>>` cannot be evaluated at compile-time
+ --> tests/misc_tests/nlist_ui_tests/nlist_pat_by_value_in_const_fn_err.rs:3:27
+  |
+3 | const fn multisplit<T, L>(list: NList<T, peano::Add<Peano!(2), L>>) -> (T, T, NList<T, L>)
+  |                           ^^^^ the destructor for this type cannot be evaluated in constant functions
+...
+9 | }
+  | - value is dropped here
