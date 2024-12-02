@@ -1,7 +1,13 @@
-/// Macro for using NList in patterns.
+/// Macro for using [`NList`](crate::NList) in patterns.
 /// 
 /// This macro uses the same syntax as array patterns, with the limitation that 
 /// it only supports `..` patterns at the end.
+/// 
+/// # Alternatives
+/// 
+/// The [`unlist`](crate::unlist) macro allows destructuring [`NList`] 
+/// by value in some contexts where this macro can't be used,
+/// refer to its docs for more details.
 /// 
 /// # Example
 /// 
@@ -51,6 +57,8 @@
 ///     matches!(nlist, nlist_pat![0, ..])
 /// }
 /// ```
+/// 
+/// [`NList`]: crate::NList
 #[macro_export]
 macro_rules! nlist_pat {
     ($($patterns:tt)*) => ( 
@@ -101,7 +109,7 @@ macro_rules! __nlist_count_elems {
     );
 }
 
-/// Destructures an nlist by value into its elements
+/// Destructures an [`NList`](crate::NList) by value into its elements
 /// 
 /// This macro uses the same syntax as array patterns, with the limitation that 
 /// it only supports `..` patterns at the end.
