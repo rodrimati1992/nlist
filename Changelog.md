@@ -104,5 +104,6 @@ Added `receiver` module with these items:
 - `type_fns::MapReceiverFn` struct (`::typewit::TypeFn` implementor)
 - reexports of `::nlist::receiver::type_fns::*`
 
-Added "alloc" crate feature
+Added `typewit = "1.10"` public dependency.
 
+Added "alloc" crate feature, which enables the "typewit/alloc" feature.
