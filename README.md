@@ -1,3 +1,8 @@
+[![Rust](https://github.com/rodrimati1992/nlist/workflows/Rust/badge.svg)](https://github.com/rodrimati1992/nlist/actions)
+[![crates-io](https://img.shields.io/crates/v/nlist.svg)](https://crates.io/crates/nlist)
+[![api-docs](https://docs.rs/nlist/badge.svg)](https://docs.rs/nlist/*)
+
+
 Provides an [inline-allocated list] which statically tracks its length,
 and type-based [integer]/[boolean] representations which 
 don't require (additional) bounds for operators.
