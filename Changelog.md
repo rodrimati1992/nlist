@@ -9,6 +9,7 @@ Added these items in the root module:
 - `NListFn` struct (`::typewit::TypeFn` implementor)
 . `NList2D` type alias
 . `nlist` macro
+. `nlist_pat` macro
 . `Node` type alias
 . `Peano` macro
 . `peano` macro
@@ -22,20 +23,30 @@ Added these items in the root module:
 - reexport of `typewit`
 
 Added `boolean` module with these items:
-
 - `And` type alias
-- `Boolean`
+- `Boolean` trait
 - `contradiction` function
 - `IfTrue` type alias
+- `IfTrueB` type alias
 - `IfTruePI` type alias
 - `Not` type alias
 - `Or` type alias
+- `Xor` type alias
+- `type_fns::AndFn` struct
+- `type_fns::IfTrueAltFn` struct
+- `type_fns::IfTrueBAltFn` struct
+- `type_fns::IfTrueBFn` struct
+- `type_fns::IfTrueFn` struct
+- `type_fns::IfTruePIAltFn` struct
+- `type_fns::IfTruePIFn` struct
+- `type_fns::NotFn` struct
+- `type_fns::OrFn` struct
+- `type_fns::XorFn` struct
 
 
 
 Added `peano` module with these items:
 - `Add` type alias
-- `check_le` function
 - `contradiction` function
 - `eq` function
 - `FromPeano` type alias
@@ -63,7 +74,9 @@ Added `peano` module with these items:
 - `to_usize` function
 - `Zero` struct
 - `type_fns::AddFn` struct
+- `type_fns::IfZeroAltFn` struct
 - `type_fns::IfZeroFn` struct
+- `type_fns::IfZeroPIAltFn` struct
 - `type_fns::IfZeroPIFn` struct
 - `type_fns::IsLeFn` struct
 - `type_fns::IsLtFn` struct
@@ -92,4 +105,6 @@ Added `receiver` module with these items:
 - `type_fns::MapReceiverFn` struct (`::typewit::TypeFn` implementor)
 - reexports of `::nlist::receiver::type_fns::*`
 
+
+Added "alloc" crate feature
 
