@@ -8,6 +8,16 @@ macro_rules! __first_ty {
 
 ///////////////////////////////////////////////////////
 
+#[macro_export]
+#[doc(hidden)]
+macro_rules! __first_pat {
+    ($first:pat, $($rem:tt)* ) => {
+        $first
+    };
+}
+
+///////////////////////////////////////////////////////
+
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __parse_closure_0_args {

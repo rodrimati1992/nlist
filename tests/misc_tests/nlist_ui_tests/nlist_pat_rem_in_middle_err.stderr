@@ -1,0 +1,7 @@
+error: nlist_pat only supports `..` patterns at the end
+ --> tests/misc_tests/nlist_ui_tests/nlist_pat_rem_in_middle_err.rs:4:9
+  |
+4 |     let nlist_pat![.., _] = nlist![3, 5, 8];
+  |         ^^^^^^^^^^^^^^^^^
+  |
+  = note: this error originates in the macro `$crate::__nlist_pat` which comes from the expansion of the macro `nlist_pat` (in Nightly builds, run with -Z macro-backtrace for more info)

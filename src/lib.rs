@@ -108,6 +108,8 @@ pub mod __ {
     pub use konst::destructure;
 
     pub use core::primitive::bool;
+
+    pub use core::compile_error;
 }
 
 
