@@ -11,7 +11,7 @@ use crate::boolean::{IfTruePI, Boolean};
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
     ///
-    /// Returns `None` if the index is greater than `self.len()`.
+    /// Returns `None` if `index >= self.len()`.
     ///
     /// # Example
     ///
@@ -44,7 +44,7 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Returns a mutable reference to the element at the `index` index.
     ///
-    /// Returns `None` if the index is greater than `self.len()`.
+    /// Returns `None` if `index >= self.len()`.
     ///
     /// # Example
     ///
@@ -123,7 +123,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///     type Dist = Peano!(1);
     ///
     ///     // passes a proof of `At < L` as argument, gets back a proof that `At - Dist < L`
-    ///     let sub_lt_l = proofs::compose_sub_lt::<At, _, _>(TypeEq::NEW);
+    ///     let sub_lt_l = proofs::compose_sub_lt::<At, Dist, L>(TypeEq::NEW);
     ///     
     ///     (
     ///         list.index_alt::<peano::SubSat<At, Dist>>(sub_lt_l),

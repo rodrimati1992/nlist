@@ -14,7 +14,7 @@ mod iterator_macros;
 ///
 /// # Example
 ///
-/// # list of elements
+/// # List each element
 ///
 /// ```rust
 /// use nlist::{NList, Peano};
@@ -25,7 +25,7 @@ mod iterator_macros;
 ///
 /// ```
 ///
-/// # repeat elements
+/// # Repeat elements
 ///
 /// Repeating a [`Copy`] value to construct an [`NList`]
 ///

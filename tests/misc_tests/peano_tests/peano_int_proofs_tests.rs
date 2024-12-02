@@ -125,15 +125,15 @@ fn compose_sub_lt_test() {
         C: PeanoInt,
     {
         let ret = const { 
-            match peano::IsLt::<A, B>::BOOL_WIT {
+            match peano::IsLt::<A, C>::BOOL_WIT {
                 BoolWitG::True(te) => Some(proofs::compose_sub_lt::<A, B, C>(te)),
                 BoolWitG::False(_) => None,
             }
         };
 
-        assert_eq!(A::USIZE < B::USIZE, ret.is_some());
+        assert_eq!(A::USIZE < C::USIZE, ret.is_some());
 
-        assert_type::<Option<TypeEq<peano::IsLt<peano::SubSat<A, C>, B>, Bool<true>>>>(ret);
+        assert_type::<Option<TypeEq<peano::IsLt<peano::SubSat<A, B>, C>, Bool<true>>>>(ret);
     }
 
     call_with_ternary!{inner}

@@ -39,6 +39,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Iterates the list elements,
     /// returning the first non-None return value of `mapper(element)`.
     ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_find_map`](crate::rec_find_map)
+    /// macro to emulate this method with a const function. 
+    ///
     /// # Example
     ///
     /// ```rust
@@ -377,6 +382,11 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Maps the elements of this list.
     ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_map`](crate::rec_map)
+    /// macro to emulate this method with a const function. 
+    ///
     /// # Example
     ///
     /// ```rust
@@ -402,6 +412,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Loops over the elements in the list, along with their index.
+    ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_for_each`](crate::rec_for_each)
+    /// macro to emulate this method with a const function. 
     ///
     /// # Example
     ///
@@ -437,6 +452,11 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Returns whether `predicate(elem)` returns true for any element.
     ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_any`](crate::rec_any)
+    /// macro to emulate this method with a const function. 
+    ///
     /// # Example
     ///
     /// ```rust
@@ -459,6 +479,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Returns whether `predicate(&elem)` returns true for all elements.
+    ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_all`](crate::rec_all)
+    /// macro to emulate this method with a const function. 
     ///
     /// # Example
     ///
@@ -500,6 +525,11 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 
     /// Folds over this list.
+    ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_fold`](crate::rec_fold)
+    /// macro to emulate this method with a const function. 
     ///
     /// # Example
     ///

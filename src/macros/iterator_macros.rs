@@ -33,6 +33,8 @@ where
 # { nlist::", $fn_name,"!{ list ", $(", ", $additional_args,)? ", |a, b| { func(a, b) }} }
 ```
 
+The closure is only called when the list is non-empty (i.e.: when `L != 0`).
+
 The closure parameters depend on the value of `P`:
 - If `P == NList<T, L>`: the parameters are `(T, Nlist<T, L::SubOneSat>)`
 - If `P == &NList<T, L>`: the parameters are `(&T, &Nlist<T, L::SubOneSat>)`

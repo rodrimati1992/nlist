@@ -1,5 +1,4 @@
 use nlist::{Peano, peano};
-use nlist::boolean::BoolWitG;
 use nlist::peano::{IntoPeano, PeanoInt, PeanoWit, FromUsize, IntoUsize, PlusOne, Usize, Zero};
 use nlist::typewit::TypeCmp;
 

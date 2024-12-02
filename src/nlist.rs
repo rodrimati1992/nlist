@@ -158,6 +158,11 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Constructs a list by calling `f` with the index of each element.
     ///
+    /// # Alternatives
+    ///
+    /// You can use the [`rec_from_fn`](crate::rec_from_fn)
+    /// macro to emulate this function with a const function. 
+    ///
     /// # Example
     ///
     /// ```rust
@@ -509,6 +514,35 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
         self.node.elem
     }
 
+    /// Const alternative of [`into_head`](Self::into_head), 
+    /// returns the first element of the list by value.
+    /// 
+    /// # Example
+    /// 
+    /// ```rust
+    /// use nlist::{NList, Peano, nlist};
+    ///
+    /// const FIRST_A: u32 = nlist![3].into_head_const();
+    /// assert_eq!(FIRST_A, 3);
+    ///
+    /// const FIRST_B: u32 = nlist![5, 3].into_head_const();
+    /// assert_eq!(FIRST_B, 5);
+    ///
+    /// const FIRST_C: u32 = nlist![8, 5, 3].into_head_const();
+    /// assert_eq!(FIRST_C, 8);
+    ///
+    /// ```
+    pub const fn into_head_const(self) -> T
+    where
+        T: Copy
+    {
+        destructure!{Self{node} = self}
+        destructure!{Cons{elem, next, len_te: _} = node}
+        next.assert_copy_drop();
+        
+        elem
+    }
+
     /// Returns a reference to the remainder of the list
     /// 
     /// # Example
@@ -674,6 +708,13 @@ impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
     /// `NList` by value/reference/mutable reference,
     /// and returns the corresponding pair of (head, tail).
     /// 
+    /// `P` and the return type can only be these:
+    /// - If `P == NList<T, PlusOne<L>>`: 
+    /// the return type is `(T, NList<T, L>)`
+    /// - If `P == &'a NList<T, PlusOne<L>>`: 
+    /// the return type is `(&'a T, &'a NList<T, L>)`
+    /// - If `P == &'a mut NList<T, PlusOne<L>>`: 
+    /// the return type is `(&'a mut T, &'a mut NList<T, L>)`
     pub const fn split_head_poly<'a, P>(
         this: P
     ) -> (HktApply<'a, P::Hkt, T>, HktApply<'a, P::Hkt, NList<T, L>>)
@@ -987,35 +1028,6 @@ impl<T, L: PeanoInt> NList<T, L> {
 
     /// Given a proof that `L == L2`, coerces `&NList<T, L>` to `&NList<T, L2>`
     /// 
-    /// # Example
-    /// 
-    /// Writing a const summing function.
-    /// 
-    /// Because [`NList::fold`] can't be called in `const`, 
-    /// `const_sum` uses manual recursion to add up all the numbers in the list.
-    /// 
-    /// ```rust
-    /// use nlist::{NList, PeanoWit, PeanoInt, PlusOne, nlist};
-    /// 
-    /// const SUM: u64 = const_sum(&nlist![3, 5, 8 ,13]);
-    /// 
-    /// assert_eq!(SUM, 29);
-    /// 
-    /// const fn const_sum<L>(list: &NList<u64, L>) -> u64
-    /// where
-    ///     L: PeanoInt
-    /// {
-    ///     // `len_te` is a proof that the length of the list is at least one
-    ///     // `len_te: TypeEq<L, PlusOne<L::SubOneSat>>`
-    ///     if let PeanoWit::PlusOne(len_te) = L::PEANO_WIT {
-    ///         let listp1: &NList<u64, PlusOne<L::SubOneSat>> = list.as_coerce_len(len_te);
-    ///         let (elem, tail): (&u64, &NList<u64, L::SubOneSat>) = listp1.split_head();
-    ///         *elem + const_sum(tail)
-    ///     } else {
-    ///         0
-    ///     }
-    /// }
-    /// ```
     pub const fn as_coerce_len<L2: PeanoInt>(&self, len_te: TypeEq<L, L2>) -> &NList<T, L2> {
         len_te.map(NListFn::NEW).in_ref().to_right(self)
     }
@@ -1031,6 +1043,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// Generic version of `coerce_len` that can take 
     /// `NList` by value/reference/mutable reference,
     /// and returns the corresponding value/reference/mutable of an `NList` with that length.
+    /// 
+    /// `P` and the return type can only be these:
+    /// - If `P == NList<T, L>`: the return type is `NList<T, L2>`
+    /// - If `P == &'a NList<T, L>`: the return type is `&'a NList<T, L2>`
+    /// - If `P == &'a mut NList<T, L>`: the return type is `&'a mut NList<T, L2>`
+    /// 
     /// 
     pub const fn coerce_len_poly<'a, P, L2>(
         this: P, 

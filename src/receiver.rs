@@ -3,7 +3,7 @@
 //! # Example
 //! 
 //! ```rust
-//! use nlist::receiver::{self, HktApply, Receiver, ReceiverWit};
+//! use nlist::receiver::{self, MapReceiver, Receiver, ReceiverWit};
 //! 
 //! assert_eq!(field(Wrapper(3)), 3);
 //! assert_eq!(field(&Wrapper(3)), &3);
@@ -13,15 +13,33 @@
 //! struct Wrapper(u32);
 //! 
 //! /// Projects a `Wrapper/&Wrapper/&mut Wrapper` to its wrapped field
-//! const fn field<'a, S>(this: S) -> HktApply<'a, S::Hkt, u32>
+//! const fn field<'a, S>(this: S) -> MapReceiver<'a, S, Wrapper, u32>
 //! where
 //!     S: Receiver<'a, Wrapper>
 //! {
 //!     let mapper = receiver::MapReceiverFn::<'a, Wrapper, u32>::NEW;
 //!     match ReceiverWit::<'a, S, Wrapper>::NEW {
-//!         ReceiverWit::Value(te) => te.map(mapper).to_left(te.to_right(this).0),
-//!         ReceiverWit::Ref(te) => te.map(mapper).to_left(&te.to_right(this).0),
-//!         ReceiverWit::RefMut(te) => te.map(mapper).to_left(&mut te.to_right(this).0),
+//!         // `te` is a proof that `S == Wrapper`
+//!         // te: TypeEq<S, Wrapper>
+//!         ReceiverWit::Value(te) => {
+//!             let ret: u32 = te.to_right(this).0;
+//!
+//!             te.map(mapper).to_left(ret)
+//!         }
+//!         // `te` is a proof that `S == &'a Wrapper`
+//!         // te: TypeEq<S, &'a Wrapper>
+//!         ReceiverWit::Ref(te) => {
+//!             let ret: &u32 = &te.to_right(this).0;
+//!
+//!             te.map(mapper).to_left(ret)
+//!         }
+//!         // `te` is a proof that `S == &'a mut Wrapper`
+//!         // te: TypeEq<S, &'a mut Wrapper>
+//!         ReceiverWit::RefMut(te) => {
+//!             let ret: &mut u32 = &mut te.to_right(this).0;
+//!
+//!             te.map(mapper).to_left(ret)
+//!         }
 //!     }
 //! }
 //! ```
@@ -46,13 +64,13 @@ pub trait Receiver<'a, T: 'a>: Sized {
     /// Marker type for abstractly representing values/references/mutable references
     // 
     // WORKAROUND: 
-    // Not using `Apply<T> = Self` because it gives bizarre type equality errors 
-    // in downstream uses.
-    // If all the tests pass with this bound:
+    // Not using the bound below because it gives bizarre errors 
+    // in the doctests for the `rec_` macros:
     // ```
     // ReceiverHkt<'a, Apply<T> = Self>
     // ```
-    // you can use this bound instead of the current bound
+    // you can use the above bound instead of the current bound if all the tests pass
+    // in all the supported Rust versions
     type Hkt: ReceiverHkt<'a, Apply<T>: Identity<Type = Self>>;
 
     /// Witness for whether Self is a `T`,`&'a T`, or `&'a mut T`.
