@@ -2,17 +2,17 @@ use core::fmt::{self, Debug};
 
 use typewit::TypeEq;
 
-use crate::peano::{PeanoInt, PlusOne, Zero};
+use crate::int::{Int, Nat, Zeros};
 
 
-/// A type witness for whether `L` (a [peano integer](PeanoInt)) is [`Zero`] or [`PlusOne`]
+/// A type witness for whether `L` (a [peano integer](Int)) is [`Zeros`] or [`Nat`]
 /// 
 /// # Example
 /// 
 /// Constructing a `&str` or `u8` depending on whether `L` is zero
 /// 
 /// ```rust
-/// use nlist::{PeanoInt, PeanoWit, Peano, peano};
+/// use nlist::{Int, IntWit, Peano, peano};
 /// use nlist::typewit::{CallFn, TypeEq};
 /// 
 /// assert_eq!(make::<Peano!(0)>(), "hello");
@@ -28,19 +28,19 @@ use crate::peano::{PeanoInt, PlusOne, Zero};
 /// // 
 /// // The `-> CallFn<StrOrUsize, L>` return type calls the `StrOrUsize` type-level function 
 /// // with `L` as an argument.
-/// const fn make<L: PeanoInt>() -> CallFn<StrOrUsize, L> {
+/// const fn make<L: Int>() -> CallFn<StrOrUsize, L> {
 ///     match L::PEANO_WIT {
-///         // len_te is a proof that `L == PlusOne<L::SubOneSat>`
-///         // len_te: TypeEq<L, PlusOne<L::SubOneSat>>
-///         PeanoWit::PlusOne(len_te) => {
+///         // len_te is a proof that `L == Nat<L::ShrOne, L::BitArg>`
+///         // len_te: TypeEq<L, Nat<L::ShrOne, L::BitArg>>
+///         IntWit::Nat(len_te) => {
 ///             // te is a proof that `CallFn<StrOrUsize, L> == usize`
 ///             let te: TypeEq<CallFn<StrOrUsize, L>, usize> = len_te.project::<StrOrUsize>();
 ///             te.to_left(<L::SubOneSat>::USIZE)
 ///         }
 /// 
-///         // len_te is a proof that `L == Zero`
-///         // len_te: TypeEq<L, Zero>
-///         PeanoWit::Zero(len_te) => {
+///         // len_te is a proof that `L == Zeros`
+///         // len_te: TypeEq<L, Zeros>
+///         IntWit::Zeros(len_te) => {
 ///             // te is a proof that `CallFn<StrOrUsize, L> == &'static str`
 ///             let te: TypeEq<CallFn<StrOrUsize, L>, &'static str> = 
 ///                 len_te.project::<StrOrUsize>();
@@ -51,33 +51,33 @@ use crate::peano::{PeanoInt, PlusOne, Zero};
 /// }
 /// 
 /// // StrOrUsize is a type-level function (`typewit::TypeFn` implementor),
-/// // which takes a PeanoInt parameter.
+/// // which takes a Int parameter.
 /// // 
 /// // In pseudocode, this is what it does on the type level:
-/// // fn StrOrUsize(L: PeanoInt) -> type {
+/// // fn StrOrUsize(L: Int) -> type {
 /// //      if L == 0 { &'static str } else { usize }  
 /// // }
-/// type StrOrUsize = peano::IfZeroAltFn<&'static str, usize>;
+/// type StrOrUsize = peano::IfZerosAltFn<&'static str, usize>;
 /// 
 /// ```
-pub enum PeanoWit<L: PeanoInt> {
-    /// Proof that `L == PlusOne<L::SubOneSat>`
-    PlusOne(TypeEq<L, PlusOne<L::SubOneSat>>),
-    /// Proof that `L == Zero`
-    Zero(TypeEq<L, Zero>),
+pub enum IntWit<L: Int> {
+    /// Proof that `L == Nat<L::ShrOne, L::BitArg>`
+    Nat(TypeEq<L, Nat<L::ShrOne, L::BitArg>>),
+    /// Proof that `L == Zeros`
+    Zeros(TypeEq<L, Zeros>),
 }
 
 
 
-impl<L: PeanoInt> Debug for PeanoWit<L> {
+impl<L: Int> Debug for IntWit<L> {
     fn fmt(&self, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        fmt.debug_tuple("PeanoWit").field(&L::USIZE).finish()        
+        fmt.debug_tuple("IntWit").field(&L::USIZE).finish()        
     }
 }
 
-impl<L: PeanoInt> Copy for PeanoWit<L> {}
+impl<L: Int> Copy for IntWit<L> {}
 
-impl<L: PeanoInt> Clone for PeanoWit<L> {
+impl<L: Int> Clone for IntWit<L> {
     fn clone(&self) -> Self {
         *self
     }

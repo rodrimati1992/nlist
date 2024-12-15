@@ -85,19 +85,22 @@ pub use typewit;
 #[macro_use]
 mod macros;
 
-pub mod boolean;
+pub mod bit;
 
-pub mod peano;
+pub mod int;
 
-mod nlist;
+pub mod tordering;
+
+// mod nlist;
 
 mod imply_trait;
 
 pub mod receiver;
 
 pub use crate::{
-    nlist::*,
-    peano::{PeanoInt, PeanoWit, PlusOne, Zero},
+    // TODO: uncomment
+    // nlist::*,
+    int::{Int, IntWit, Nat, Zeros},
 };
 
 

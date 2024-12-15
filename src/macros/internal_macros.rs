@@ -84,7 +84,7 @@ macro_rules! declare_type_fn {
         $mod:ident, 
         $opname:literal, 
         $this_bound:ident::$op:ident $(<$( $args:ident),* >)?, 
-        $bound:ident 
+        $bound:path
     ) => (
 
         typewit::type_fn! {

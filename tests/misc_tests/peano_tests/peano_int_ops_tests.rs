@@ -236,13 +236,13 @@ fn if_zero_pi_test() {
         Else: PeanoInt,
     {
         let _: typewit::TypeEq<
-            typewit::CallFn<peano::IfZeroPIAltFn<Then, Else>, This>,
-            typewit::CallFn<peano::IfZeroPIFn, (This, Then, Else)>,
+            typewit::CallFn<peano::IfZeroIAltFn<Then, Else>, This>,
+            typewit::CallFn<peano::IfZeroIFn, (This, Then, Else)>,
         > = typewit::TypeEq::NEW;
     }
 
     test_nonassoc_op! {
-        PeanoInt IfZeroPI<A, B> IfZeroPIFn, PeanoInt -> PeanoInt, peano =>
+        PeanoInt IfZeroI<A, B> IfZeroIFn, PeanoInt -> PeanoInt, peano =>
 
         (Peano!(0), Peano!(10), Peano!(20) => Peano!(10))
         (Peano!(1), Peano!(11), Peano!(21) => Peano!(21))

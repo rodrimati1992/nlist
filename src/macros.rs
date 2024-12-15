@@ -18,9 +18,9 @@ mod iterator_macros;
 /// # List each element
 ///
 /// ```rust
-/// use nlist::{NList, Peano};
+/// use nlist::{NList, Int};
 ///
-/// const LIST: NList<u32, Peano!(4)> = nlist::nlist![3, 5, 8, 13];
+/// const LIST: NList<u32, Int!(4)> = nlist::nlist![3, 5, 8, 13];
 ///
 /// assert_eq!(LIST.into_vec(), vec![3, 5, 8, 13]);
 ///
@@ -31,14 +31,14 @@ mod iterator_macros;
 /// Repeating a [`Copy`] value to construct an [`NList`]
 ///
 /// ```rust
-/// use nlist::{NList, Peano};
+/// use nlist::{NList, Int};
 ///
 /// // Inferring the length 
-/// let list_a: NList<u8, Peano!(2)> = nlist::nlist![5; _];
+/// let list_a: NList<u8, Int!(2)> = nlist::nlist![5; _];
 /// assert_eq!(list_a.into_array(), [5, 5]);
 ///
 /// // Passing the length explicitly
-/// let list_b: NList<&str, Peano!(3)> = nlist::nlist!["heh"; 3];
+/// let list_b: NList<&str, Int!(3)> = nlist::nlist!["heh"; 3];
 /// assert_eq!(list_b.into_array(), ["heh", "heh", "heh"]);
 ///
 /// ```
@@ -51,7 +51,7 @@ macro_rules! nlist {
         $crate::NList::repeat_copy($expr)
     };
     ($expr:expr; $len:expr) => {
-        $crate::NList::<_, $crate::Peano!($len)>::repeat_copy($expr)
+        $crate::NList::<_, $crate::Int!($len)>::repeat_copy($expr)
     };
     ($($expr:expr),* $(,)?) => {
         $crate::__nlist!{$($expr)*}
@@ -71,49 +71,49 @@ macro_rules! __nlist {
 
 ///////////////////////////////////
 
-/// Converts an integer constant to a [peano integer](crate::PeanoInt)
+/// Converts an integer constant to a [int integer](crate::Int)
 ///
-/// This macro is sugar for `<`[`FromUsize`]` as `[`PeanoInt`]`>::NEW`
+/// This macro is sugar for `<`[`FromUsize`]` as `[`Int`]`>::NEW`
 ///
 /// # Example
 ///
 /// ```rust
-/// use nlist::{NList, nlist, Peano, peano};
+/// use nlist::{NList, nlist, Int, int};
 ///
-/// let val_0: Peano!(0) = peano!(0);
-/// let val_1: Peano!(1) = peano!(1);
-/// let val_2: Peano!(2) = peano!(2);
-/// let val_3: Peano!(3) = peano!(3);
+/// let val_0: Int!(0) = int!(0);
+/// let val_1: Int!(1) = int!(1);
+/// let val_2: Int!(2) = int!(2);
+/// let val_3: Int!(3) = int!(3);
 /// ```
 ///
-/// [`FromUsize`]: crate::peano::FromUsize
-/// [`PeanoInt`]: crate::PeanoInt
+/// [`FromUsize`]: crate::int::FromUsize
+/// [`Int`]: crate::Int
 #[macro_export]
-macro_rules! peano {
+macro_rules! int {
     ($expr:expr) => {
-        <$crate::peano::FromUsize<$expr> as $crate::PeanoInt>::NEW
+        <$crate::int::FromUsize<$expr> as $crate::Int>::NEW
     }
 }
 
-/// Converts an integer constant to a [peano integer](crate::PeanoInt)
+/// Converts an integer constant to a [int integer](crate::Int)
 ///
 /// This macro is just sugar for the [`FromUsize`] type alias
 ///
 /// # Example
 ///
 /// ```rust
-/// use nlist::{NList, nlist, Peano};
+/// use nlist::{NList, nlist, Int};
 ///
-/// let list_0: NList<u8, Peano!(0)> = nlist![];
-/// let list_1: NList<u8, Peano!(1)> = nlist![3];
-/// let list_2: NList<u8, Peano!(2)> = nlist![3, 5];
-/// let list_3: NList<u8, Peano!(3)> = nlist![3, 5, 8];
+/// let list_0: NList<u8, Int!(0)> = nlist![];
+/// let list_1: NList<u8, Int!(1)> = nlist![3];
+/// let list_2: NList<u8, Int!(2)> = nlist![3, 5];
+/// let list_3: NList<u8, Int!(3)> = nlist![3, 5, 8];
 /// ```
 ///
-/// [`FromUsize`]: crate::peano::FromUsize
+/// [`FromUsize`]: crate::int::FromUsize
 #[macro_export]
-macro_rules! Peano {
+macro_rules! Int {
     ($expr:expr) => {
-        $crate::peano::FromUsize<{$expr}>
+        $crate::int::FromUsize<{$expr}>
     }
 }

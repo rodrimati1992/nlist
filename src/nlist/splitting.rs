@@ -4,7 +4,7 @@ use typewit::{const_marker::Bool, TypeCmp, TypeEq};
 
 use super::NList;
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
-use crate::boolean::{IfTruePI, Boolean};
+use crate::boolean::{IfTrueI, Boolean};
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Splits this list at the `At` index.
@@ -183,7 +183,7 @@ impl<T, L: PeanoInt> NList<T, L> {
 typewit::type_fn!{
     struct SplitAtRetTypeFn<T, At, L>;
 
-    impl<B> B => (NList<T, IfTruePI<B, At, L>>, NList<T, peano::SubSat<L, At>>)
+    impl<B> B => (NList<T, IfTrueI<B, At, L>>, NList<T, peano::SubSat<L, At>>)
     where
         B: Boolean,
         At: PeanoInt,

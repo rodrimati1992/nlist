@@ -79,9 +79,9 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             /// Computes the `LSub` type argument for a recursive call to `inner`.
             struct SubTailLenFn<LInner>;
 
-            impl<LSub, LOuter> (LSub, LOuter) => peano::IfZeroPI<
+            impl<LSub, LOuter> (LSub, LOuter) => peano::IfZeroI<
                 LSub,
-                peano::IfZeroPI<LOuter, Zero, LInner>,
+                peano::IfZeroI<LOuter, Zero, LInner>,
                 SubOneSat<LSub>,
             >
             where
@@ -96,8 +96,8 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
             impl<LSub> LSub => (
                 NList<T, CallFn<SubTailLenFn<LInner>, (LSub, LOuter)>>,
-                NList2D<T, peano::IfZeroPI<LSub, SubOneSat<LOuter>, LOuter>, LInner>,
-                NList<T, peano::IfZeroPI<LSub, LAcc, peano::Min<PlusOne<LAcc>, LRet>>>,
+                NList2D<T, peano::IfZeroI<LSub, SubOneSat<LOuter>, LOuter>, LInner>,
+                NList<T, peano::IfZeroI<LSub, LAcc, peano::Min<PlusOne<LAcc>, LRet>>>,
             )
             where
                 LSub: PeanoInt,

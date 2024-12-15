@@ -1,7 +1,7 @@
-//! Contains proofs of arithmetic properties of [`PeanoInt`]s
+//! Contains proofs of arithmetic properties of [`Int`]s
 //! 
 //! These properties are useful in generic contexts, where the compiler does no
-//! reasoning WRT the arithmetic properties of [`PeanoInt`]s. 
+//! reasoning WRT the arithmetic properties of [`Int`]s. 
 //! 
 //! # Alternative
 //! 
@@ -33,15 +33,15 @@
 //! ```
 //! 
 //! ```rust
-//! use nlist::{NList, NList2D, PeanoInt, nlist, peano};
+//! use nlist::{NList, NList2D, Int, nlist, peano};
 //! 
 //! 
 //! const fn flatten_comm<T, LOuter, LInner>(
 //!     list: NList2D<T, LOuter, LInner>,
 //! ) -> NList<T, peano::Mul<LInner, LOuter>>
 //! where   
-//!     LOuter: PeanoInt,
-//!     LInner: PeanoInt,
+//!     LOuter: Int,
+//!     LInner: Int,
 //! {
 //!     let flat: NList<T, peano::Mul<LOuter, LInner>> = list.flatten();
 //!     
@@ -51,14 +51,16 @@
 //! ```
 //! [`peano::eq`]: crate::peano::eq
 
+use crate::bit::{Bit, BitWit, B1};
+
 use super::*;
 
 
 /// Proof that `L + R` == `R + L`
 pub const fn commutative_add<L, R>() -> TypeEq<Add<L, R>, Add<R, L>>
 where
-    L: PeanoInt,
-    R: PeanoInt,
+    L: Int,
+    R: Int,
 {
     // axiom
     const {
@@ -69,8 +71,8 @@ where
 /// Proof that `L * R` == `R * L`
 pub const fn commutative_mul<L, R>() -> TypeEq<Mul<L, R>, Mul<R, L>>
 where
-    L: PeanoInt,
-    R: PeanoInt,
+    L: Int,
+    R: Int,
 {
     // axiom
     const {
@@ -79,42 +81,42 @@ where
 }
 
 /// Proof that `L + 0` == `L`
-pub const fn add_identity<L>() -> TypeEq<Add<L, Zero>, L>
+pub const fn add_identity<L>() -> TypeEq<Add<L, Zeros>, L>
 where
-    L: PeanoInt,
+    L: Int,
 {
     // axiom
     const {
-        super::eq::<Add<L, Zero>, L>().unwrap_eq()        
+        super::eq::<Add<L, Zeros>, L>().unwrap_eq()        
     }
 }
 
 /// Proof that `SubSat<L, 0>` == `L`
-pub const fn sub_identity<L>() -> TypeEq<SubSat<L, Zero>, L>
+pub const fn sub_identity<L>() -> TypeEq<SubSat<L, Zeros>, L>
 where
-    L: PeanoInt,
+    L: Int,
 {
     // axiom
     const {
-        super::eq::<SubSat<L, Zero>, L>().unwrap_eq()        
+        super::eq::<SubSat<L, Zeros>, L>().unwrap_eq()        
     }
 }
 
 /// Proof that, if A < C, then`SubSat<A, B> < C`
 /// 
 pub const fn compose_sub_lt<A, B, C>(
-    _a_is_lt_b: TypeEq<IsLt<A, C>, Bool<true>>
-) -> TypeEq<IsLt<SubSat<A, B>, C>, Bool<true>>
+    _a_is_lt_b: TypeEq<IsLt<A, C>, B1>
+) -> TypeEq<IsLt<SubSat<A, B>, C>, B1>
 where
-    A: PeanoInt,
-    B: PeanoInt,
-    C: PeanoInt,
+    A: Int,
+    B: Int,
+    C: Int,
 {
     // not in a const block because if this function is monomorphized
     // in a context where A >= C, it could cause a compilation error.
-    match Boolean::BOOL_WIT {
-        BoolWitG::True(x) => x,
-        BoolWitG::False(_) => panic!("axiom"),
+    match Bit::BIT_WIT {
+        BitWit::B1(x) => x,
+        BitWit::B0(_) => panic!("axiom"),
     }
 }
 

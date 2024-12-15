@@ -107,7 +107,7 @@ fn iftruepi_test() {
     }
 
     test_op! {
-        Boolean::IfTruePI<Then, Else> IfTruePI IfTruePIFn, PeanoInt -> PeanoInt, boolean =>
+        Boolean::IfTrueI<Then, Else> IfTrueI IfTruePIFn, PeanoInt -> PeanoInt, boolean =>
         (Bool<false>, Peano!(3), Peano!(5) => Peano!(5))
         (Bool<false>, Peano!(8), Peano!(13) => Peano!(13))
         (Bool<true>, Peano!(3), Peano!(5) => Peano!(3))

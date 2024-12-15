@@ -6,7 +6,7 @@ use super::{Cons, NList};
 #[allow(unused_imports)]
 use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
 
-use crate::boolean::{IfTruePI, Boolean};
+use crate::boolean::{IfTrueI, Boolean};
 
 impl<T, L: PeanoInt> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
@@ -213,7 +213,7 @@ impl<T, L: PeanoInt> NList<T, L> {
 typewit::type_fn! {
     struct IndexListLenFn<T, I: PeanoInt, L: PeanoInt>;
 
-    impl<B: Boolean> B => NList<T, IfTruePI<B, L, PlusOne<I>>>
+    impl<B: Boolean> B => NList<T, IfTrueI<B, L, PlusOne<I>>>
 }
 
 
@@ -223,13 +223,13 @@ where
     At: PeanoInt,
 {
     Iterating {
-        // The `IfZeroPI<At, L` part is necessary so that, 
+        // The `IfZeroI<At, L` part is necessary so that, 
         // when this enum is `Self::Finished`,
         // the recursive call to `inner` in the dead `Iterating` branch
         // doesn't cause const panics.
         // If rustc didn't evaluate const code in dead branches, this field would be:
         // `TypeEq<L, PlusOne<L::SubOneSat>>`
-        l_te: TypeEq<L, PlusOne<peano::IfZeroPI<At, L, L::SubOneSat>>>,
+        l_te: TypeEq<L, PlusOne<peano::IfZeroI<At, L, L::SubOneSat>>>,
         at_te: TypeEq<At, PlusOne<At::SubOneSat>>,
     },
     Finished {
@@ -240,7 +240,7 @@ where
 typewit::type_fn! {
     struct MapTailFn<L>;
 
-    impl<At> At => PlusOne<peano::IfZeroPI<At, L, L::SubOneSat>>
+    impl<At> At => PlusOne<peano::IfZeroI<At, L, L::SubOneSat>>
     where
         At: PeanoInt,
         L: PeanoInt,
