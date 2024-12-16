@@ -67,10 +67,18 @@ impl Int for Zeros {
     #[doc(hidden)]
     type __SubSat<Rhs: Int, Overflow: Bit> = Zeros;
 
+    #[doc(hidden)]
+    type __SubSatOverflow<Overflow: Bit> = Zeros;
+
+    type AddOne = Nat<Zeros, B1>;
+
     type Add<Rhs: Int> = Rhs;
 
     #[doc(hidden)]
-    type __Add<Rhs: Int, Overflow: Bit> = 
+    type __Add<Rhs: Int, Overflow: Bit> = Rhs::__AddOverflow<Overflow>;
+
+    #[doc(hidden)]
+    type __AddOverflow<Overflow: Bit> = 
         bit::IfTrueI<Overflow, Nat<Zeros, Overflow>, Zeros>;
 
     type Mul<Rhs: Int> = Zeros;
@@ -100,7 +108,10 @@ impl<NextBits: Int, B: Bit> Int for Nat<NextBits, B> {
 
     type IsZeros = B0;
 
-    type SubOneSat = Self::SubSat<crate::Int!(1)>;
+    type SubOneSat = __Normalize<
+        <NextBits as Int>::__SubSatOverflow<B>,
+        B::Not,
+    >;
 
     type SubSat<Rhs: Int> = Self::__SubSat<Rhs, B0>;
 
@@ -110,6 +121,14 @@ impl<NextBits: Int, B: Bit> Int for Nat<NextBits, B> {
         Xor<B, Xor<Overflow, Rhs::BitArg>>,
     >;
 
+    #[doc(hidden)]
+    type __SubSatOverflow<Overflow: Bit> = __Normalize<
+        <NextBits as Int>::__SubSatOverflow<bit::And<Overflow, B>>,
+        Xor<Overflow, B>,
+    >;
+
+    type AddOne = Nat<<NextBits as Int>::__AddOverflow<B>, B::Not>;
+
     type Add<Rhs: Int> = Self::__Add<Rhs, B0>;
 
     #[doc(hidden)]
@@ -117,6 +136,10 @@ impl<NextBits: Int, B: Bit> Int for Nat<NextBits, B> {
         <NextBits as Int>::__Add<Rhs::ShrOne, bit::AtLeastTwoB1s<B, Overflow, Rhs::BitArg>>,
         Xor<B, Xor<Overflow, Rhs::BitArg>>,
     >;
+
+    #[doc(hidden)]
+    type __AddOverflow<Overflow: Bit> = 
+        Nat<<NextBits as Int>::__AddOverflow<bit::And<Overflow, B>>, Xor<Overflow, B>>;
 
     type Mul<Rhs: Int> = Add<
         Mul<NextBits, ShlOne<Rhs>>, 
@@ -161,9 +184,9 @@ impl<NextBits: Int, B: Bit> Int for Nat<NextBits, B> {
 }
 
 // normalizes a Nat so that instead of evaluating to
-//     Nat<Nat<Zero, B0>, B1>
+//     Nat<Nat<Zeros, B0>, B1>
 // it evaluates to
-//     Nat<Zero, B1>
+//     Nat<Zeros, B1>
 // (the top bit must always be B1)
 type __Normalize<NextBits, B> =
     bit::IfTrueI<

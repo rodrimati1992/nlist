@@ -1,4 +1,4 @@
-use nlist::{NList, Peano, PeanoInt, nlist, peano, nlist_pat};
+use nlist::{NList, Peano, Int, nlist, peano, nlist_pat};
 
 // ensures that fixed-length `nlist_pat`s infer the length of the NList
 #[test]
@@ -204,7 +204,7 @@ fn unlist_array_pattern() {
 fn unlist_split1() {
     const fn inner<T, L>(list: NList<T, peano::Add<Peano!(1), L>>) -> (T, NList<T, L>)
     where
-        L: PeanoInt
+        L: Int
     {
         nlist::unlist!{[a, b @ ..] = list}
         
@@ -218,7 +218,7 @@ fn unlist_split1() {
 fn unlist_split2() {
     const fn inner<T, L>(list: NList<T, peano::Add<Peano!(2), L>>) -> (T, T, NList<T, L>)
     where
-        L: PeanoInt
+        L: Int
     {
         nlist::unlist!{[a, b, c @ ..] = list}
         

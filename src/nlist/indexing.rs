@@ -3,12 +3,15 @@ use typewit::{const_marker::Bool, TypeEq};
 
 use super::{Cons, NList};
 
-#[allow(unused_imports)]
-use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
-
 use crate::boolean::{IfTrueI, Boolean};
 
-impl<T, L: PeanoInt> NList<T, L> {
+#[allow(unused_imports)]
+use crate::int::{self, Int, IntWit, Nat, SubOneSat, Zeros};
+
+use crate::tordering::TLess;
+
+
+impl<T, L: Int> NList<T, L> {
     /// Returns a reference to the element at the `index` index.
     ///
     /// Returns `None` if `index >= self.len()`.
@@ -28,9 +31,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     /// ```
     pub const fn get(&self, index: usize) -> Option<&T> {
-        match L::PEANO_WIT {
-            PeanoWit::Zero { .. } => None,
-            PeanoWit::PlusOne(len_te) => {
+        match L::INT_WIT {
+            IntWit::Zeros { .. } => None,
+            IntWit::Nat(len_te) => {
                 let Cons { elem, next, .. } = &self.as_coerce_len(len_te).node;
 
                 if let Some(sub1) = index.checked_sub(1) {
@@ -61,9 +64,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     /// ```
     pub const fn get_mut(&mut self, index: usize) -> Option<&mut T> {
-        match L::PEANO_WIT {
-            PeanoWit::Zero { .. } => None,
-            PeanoWit::PlusOne(len_te) => {
+        match L::INT_WIT {
+            IntWit::Zeros { .. } => None,
+            IntWit::Nat(len_te) => {
                 let Cons { elem, next, .. } = &mut self.as_mut_coerce_len(len_te).node;
 
                 if let Some(sub1) = index.checked_sub(1) {
@@ -93,7 +96,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn index<I>(&self) -> &T
     where
-        I: PeanoInt<IsLt<L> = Bool<true>>,
+        I: Int<Cmp<L> = TLess>,
     {
         self.index_alt::<I>(TypeEq::NEW)
     }
@@ -103,22 +106,22 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// # Example
     ///
     /// ```rust
-    /// use nlist::{NList, Peano, nlist, peano};
-    /// use nlist::peano::{PeanoInt, proofs};
+    /// use nlist::{NList, Peano, nlist, int};
+    /// use nlist::int::{Int, proofs};
     /// use nlist::boolean::Bool;
     /// use nlist::typewit::TypeEq;
     /// 
     /// let list = nlist![3, 5, 8, 13];
     /// 
-    /// assert_eq!(at(&list, peano!(0)), (&3, &3));
-    /// assert_eq!(at(&list, peano!(1)), (&3, &5));
-    /// assert_eq!(at(&list, peano!(2)), (&5, &8));
-    /// assert_eq!(at(&list, peano!(3)), (&8, &13));
+    /// assert_eq!(at(&list, int!(0)), (&3, &3));
+    /// assert_eq!(at(&list, int!(1)), (&3, &5));
+    /// assert_eq!(at(&list, int!(2)), (&5, &8));
+    /// assert_eq!(at(&list, int!(3)), (&8, &13));
     /// 
     /// const fn at<T, L, At>(list: &NList<T, L>, _at: At) -> (&T, &T) 
     /// where
-    ///     L: PeanoInt,
-    ///     At: PeanoInt<IsLt<L> = Bool<true>>,
+    ///     L: Int,
+    ///     At: Int<Cmp<L> = TLess>,
     /// {
     ///     type Dist = Peano!(1);
     ///
@@ -126,20 +129,20 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///     let sub_lt_l = proofs::compose_sub_lt::<At, Dist, L>(TypeEq::NEW);
     ///     
     ///     (
-    ///         list.index_alt::<peano::SubSat<At, Dist>>(sub_lt_l),
+    ///         list.index_alt::<int::SubSat<At, Dist>>(sub_lt_l),
     ///         list.index::<At>(),
     ///     )
     /// }
     /// ```
     /// 
-    pub const fn index_alt<I>(&self, i_lt_l_te: TypeEq<I::IsLt<L>, Bool<true>>) -> &T 
+    pub const fn index_alt<I>(&self, i_lt_l_te: TypeEq<I::Cmp<L>, TLess>) -> &T 
     where
-        I: PeanoInt
+        I: Int
     {
         const fn inner<T, L, At>(list: &NList<T, L>, at: At) -> &T
         where
-            L: PeanoInt,
-            At: PeanoInt,
+            L: Int,
+            At: Int,
         {
             match IndexState::<L, At>::NEW {
                 IndexState::Iterating { l_te, at_te } => {
@@ -173,7 +176,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn index_mut<I>(&mut self) -> &mut T
     where
-        I: PeanoInt<IsLt<L> = Bool<true>>,
+        I: Int<Cmp<L> = TLess>,
     {
         self.index_mut_alt::<I>(TypeEq::NEW)
     }
@@ -184,15 +187,15 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///
     pub const fn index_mut_alt<I>(
         &mut self,
-        i_lt_l_te: TypeEq<I::IsLt<L>, Bool<true>>,
+        i_lt_l_te: TypeEq<I::Cmp<L>, TLess>,
     ) -> &mut T
     where
-        I: PeanoInt,
+        I: Int,
     {
         const fn inner<T, L, At>(list: &mut NList<T, L>, at: At) -> &mut T
         where
-            L: PeanoInt,
-            At: PeanoInt,
+            L: Int,
+            At: Int,
         {
             match IndexState::<L, At>::NEW {
                 IndexState::Iterating { l_te, at_te } => {
@@ -211,16 +214,16 @@ impl<T, L: PeanoInt> NList<T, L> {
 
 
 typewit::type_fn! {
-    struct IndexListLenFn<T, I: PeanoInt, L: PeanoInt>;
+    struct IndexListLenFn<T, I: Int, L: Int>;
 
-    impl<B: Boolean> B => NList<T, IfTrueI<B, L, PlusOne<I>>>
+    impl<B: Boolean> B => NList<T, IfTrueI<B, L, Nat<I>>>
 }
 
 
 enum IndexState<L, At>
 where
-    L: PeanoInt,
-    At: PeanoInt,
+    L: Int,
+    At: Int,
 {
     Iterating {
         // The `IfZeroI<At, L` part is necessary so that, 
@@ -228,35 +231,35 @@ where
         // the recursive call to `inner` in the dead `Iterating` branch
         // doesn't cause const panics.
         // If rustc didn't evaluate const code in dead branches, this field would be:
-        // `TypeEq<L, PlusOne<L::SubOneSat>>`
-        l_te: TypeEq<L, PlusOne<peano::IfZeroI<At, L, L::SubOneSat>>>,
-        at_te: TypeEq<At, PlusOne<At::SubOneSat>>,
+        // `TypeEq<L, Nat<L::SubOneSat>>`
+        l_te: TypeEq<L, int::AddOne<int::IfZeroI<At, L, L::SubOneSat>>>,
+        at_te: TypeEq<At, int::CoerceNat<At>>,
     },
     Finished {
-        l_te: TypeEq<L, PlusOne<L::SubOneSat>>,
+        l_te: TypeEq<L, int::CoerceNat<L>>,
     },
 }
 
 typewit::type_fn! {
     struct MapTailFn<L>;
 
-    impl<At> At => PlusOne<peano::IfZeroI<At, L, L::SubOneSat>>
+    impl<At> At => Nat<int::IfZeroI<At, L, L::SubOneSat>>
     where
-        At: PeanoInt,
-        L: PeanoInt,
+        At: Int,
+        L: Int,
 }
 
 impl<L, At> IndexState<L, At>
 where
-    L: PeanoInt,
-    At: PeanoInt,
+    L: Int,
+    At: Int,
 {
-    const NEW: Self = match (L::PEANO_WIT, At::PEANO_WIT) {
-        (PeanoWit::PlusOne(l_te), PeanoWit::PlusOne(at_te)) => Self::Iterating {
+    const NEW: Self = match (L::INT_WIT, At::INT_WIT) {
+        (IntWit::Nat(l_te), IntWit::Nat(at_te)) => Self::Iterating {
             l_te: l_te.join(at_te.project::<MapTailFn<L>>().flip()),
             at_te,
         },
-        (PeanoWit::PlusOne(l_te), PeanoWit::Zero(_)) => IndexState::Finished { l_te },
+        (IntWit::Nat(l_te), IntWit::Zeros(_)) => IndexState::Finished { l_te },
         _ => concat_panic! {
             "indexing bug: ",
             " L: ", L::USIZE,

@@ -102,6 +102,17 @@ where
     }
 }
 
+/// Proof that `SubOneSat<AddOne<L>>` == `L`
+pub const fn add_sub_1_identity<L>() -> TypeEq<SubOneSat<AddOne<L>>, L>
+where
+    L: Int,
+{
+    // axiom
+    const {
+        super::eq::<SubOneSat<AddOne<L>>, L>().unwrap_eq()        
+    }
+}
+
 /// Proof that, if A < C, then`SubSat<A, B> < C`
 /// 
 pub const fn compose_sub_lt<A, B, C>(

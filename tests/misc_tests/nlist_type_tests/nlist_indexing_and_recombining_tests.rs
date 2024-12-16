@@ -1,4 +1,4 @@
-use nlist::{Peano, PeanoInt, NList, nlist, peano};
+use nlist::{Peano, Int, NList, nlist, peano};
 use nlist::boolean::{Bool, Boolean, BoolWitG};
 
 use crate::misc_tests::test_utils::assert_type;
@@ -10,8 +10,8 @@ fn split_at_test() {
         list: NList<T, L>
     ) -> (NList<T, At>, NList<T, peano::SubSat<L, At>>)
     where
-        L: PeanoInt,
-        At: peano::PeanoInt<IsLe<L> = Bool<true>>,
+        L: Int,
+        At: peano::Int<IsLe<L> = Bool<true>>,
     {
         list.split_at::<At>()
     }
@@ -22,7 +22,7 @@ fn split_at_test() {
                 list: NList<T, peano::Add<Peano!($at), L>>
             ) -> (NList<T, Peano!($at)>, NList<T, L>)
             where
-                L: PeanoInt,
+                L: Int,
             {
                 konst::destructure!{(before, after) = callit::<_, Peano!($at), _>(list)}
                 
@@ -58,8 +58,8 @@ fn split_at_alt_test() {
     ) -> Option<(NList<T, At>, NList<T, peano::SubSat<L, At>>)>
     where
         T: Copy,
-        L: PeanoInt,
-        At: PeanoInt,
+        L: Int,
+        At: Int,
     {
         match peano::IsLe::<At, L>::BOOL_WIT {
             BoolWitG::True(is_le) => Some(list.split_at_alt::<At>(is_le)),
@@ -118,7 +118,7 @@ fn split_at_alt_test() {
 fn get_test() {
     const fn callit<T, L>(list: &NList<T, L>, index: usize) -> Option<&T>
     where
-        L: PeanoInt
+        L: Int
     {
         list.get(index)
     }
@@ -152,7 +152,7 @@ fn get_test() {
 fn get_mut_test() {
     const fn callit<T, L>(list: &mut NList<T, L>, index: usize) -> Option<&mut T>
     where
-        L: PeanoInt
+        L: Int
     {
         list.get_mut(index)
     }
@@ -185,8 +185,8 @@ fn get_mut_test() {
 fn index_test() {
     const fn callit<T, L, At>(list: &NList<T, L>, _at: At) -> &T
     where
-        L: PeanoInt,
-        At: PeanoInt<IsLt<L> = Bool<true>>
+        L: Int,
+        At: Int<IsLt<L> = Bool<true>>
     {
         list.index::<At>()
     }
@@ -228,8 +228,8 @@ fn index_test() {
 fn index_alt_test() {
     const fn callit<T, L, At>(list: &NList<T, L>, _at: At) -> Option<&T>
     where
-        L: PeanoInt,
-        At: PeanoInt,
+        L: Int,
+        At: Int,
     {
         match peano::IsLt::<At, L>::BOOL_WIT {
             BoolWitG::True(proof) => {
@@ -269,8 +269,8 @@ fn index_alt_test() {
 fn index_mut_test() {
     const fn callit<T, L, At>(list: &mut NList<T, L>, _at: At) -> &mut T
     where
-        L: PeanoInt,
-        At: PeanoInt<IsLt<L> = Bool<true>>
+        L: Int,
+        At: Int<IsLt<L> = Bool<true>>
     {
         list.index_mut::<At>()
     }
@@ -312,8 +312,8 @@ fn index_mut_test() {
 fn index_mut_alt_test() {
     const fn callit<T, L, At>(list: &mut NList<T, L>, _at: At) -> Option<&mut T>
     where
-        L: PeanoInt,
-        At: PeanoInt,
+        L: Int,
+        At: Int,
     {
         match peano::IsLt::<At, L>::BOOL_WIT {
             BoolWitG::True(proof) => {

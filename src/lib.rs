@@ -11,7 +11,7 @@
 //! so long as the length is known to be greater than the split index.
 //!
 //! ```rust
-//! use nlist::{NList, Peano, PeanoInt, nlist, peano};
+//! use nlist::{NList, Peano, Int, nlist, peano};
 //!
 //! const LIST: NList<u128, Peano!(7)> = transform(nlist![3, 5, 8, 13, 21, 34, 55]);
 //!
@@ -23,7 +23,7 @@
 //!     list: NList<u128, peano::Add<SplitIndex, L>>,
 //! ) -> NList<u128, peano::Add<SplitIndex, L>>
 //! where
-//!     L: PeanoInt,
+//!     L: Int,
 //! {
 //!     // if we use `let` to destructure instead of `konst::destructure`,
 //!     // we get a "destructor cannot be evaluated at compile-time" error as of Rust 1.83
@@ -46,7 +46,7 @@
 //! }
 //! 
 //! // Adds 100 to all elemenst of an NList
-//! const fn map_add_100<L: PeanoInt>(list: NList<u128, L>) -> NList<u128, L> {
+//! const fn map_add_100<L: Int>(list: NList<u128, L>) -> NList<u128, L> {
 //!     nlist::rec_map!(list, |elem, rest| (elem + 100, map_add_100(rest)))
 //! }
 //! ```
@@ -66,7 +66,7 @@
 //!
 //!
 //! [inline-allocated list]: crate::NList
-//! [integer]: crate::peano::PeanoInt  
+//! [integer]: crate::peano::Int  
 //! [boolean]: crate::boolean::Boolean 
 //! [`NList`]: crate::NList
 //! [`Vec`]: alloc::vec::Vec
@@ -91,15 +91,14 @@ pub mod int;
 
 pub mod tordering;
 
-// mod nlist;
+mod nlist;
 
 mod imply_trait;
 
 pub mod receiver;
 
 pub use crate::{
-    // TODO: uncomment
-    // nlist::*,
+    nlist::*,
     int::{Int, IntWit, Nat, Zeros},
 };
 

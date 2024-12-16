@@ -29,7 +29,7 @@ use crate::int::{Int, Nat, Zeros};
 /// // The `-> CallFn<StrOrUsize, L>` return type calls the `StrOrUsize` type-level function 
 /// // with `L` as an argument.
 /// const fn make<L: Int>() -> CallFn<StrOrUsize, L> {
-///     match L::PEANO_WIT {
+///     match L::INT_WIT {
 ///         // len_te is a proof that `L == Nat<L::ShrOne, L::BitArg>`
 ///         // len_te: TypeEq<L, Nat<L::ShrOne, L::BitArg>>
 ///         IntWit::Nat(len_te) => {

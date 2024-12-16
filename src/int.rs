@@ -76,11 +76,19 @@ pub use self::from_const::{FromInt, FromUsize, IntoInt, IntoUsize};
 ///////////////////////////////////////////////////////////////////////////////
 
 
-// The impls of std traits for Zeros and PlusOne are all here
+// The impls of std traits for Zeros and Nat are all here
 mod int_types;
 
 pub use self::int_types::{Zeros, Nat};
 
+
+///////////////////////////////////////////////////////////////////////////////
+
+/// Coerces L to a Nat.
+/// 
+/// WARNING: if `L` is a `Zeros` it'll produce a denormalized `Nat`, 
+/// which can cause compilation errors.
+pub type CoerceNat<L> = Nat<ShrOne<L>, <L as Int>::BitArg>;
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -109,6 +117,9 @@ pub type SubSat<Lhs, Rhs> = <Lhs as Int>::SubSat<Rhs>;
 /// Type alias form of [`Int::Add`]
 pub type Add<Lhs, Rhs> = <Lhs as Int>::Add<Rhs>;
 
+/// Type alias version of [`Int::Add`], which coerces the return value to a `Nat`.
+pub type AddOne<Lhs> = CoerceNat<<Lhs as Int>::AddOne>;
+
 /// Type alias form of [`Int::Mul`]
 pub type Mul<Lhs, Rhs> = <Lhs as Int>::Mul<Rhs>;
 
@@ -131,7 +142,7 @@ pub type Cmp<Lhs, Rhs> = <Lhs as Int>::Cmp<Rhs>;
 
 /// Trait for a type-level unary encoding of unsigned integers.
 /// 
-/// Only [`Zeros`] and [`PlusOne`] implement this trait,
+/// Only [`Zeros`] and [`Nat`] implement this trait,
 /// no other type can implement it.
 /// 
 /// # Example
@@ -140,7 +151,7 @@ pub type Cmp<Lhs, Rhs> = <Lhs as Int>::Cmp<Rhs>;
 /// 
 /// ```rust
 /// use nlist::{Int, peano};
-/// use nlist::peano::{Int, IntWit, PlusOne, Zeros};
+/// use nlist::peano::{Int, IntWit, Nat, Zeros};
 /// use nlist::typewit::{CallFn, type_fn};
 /// 
 /// 
@@ -153,8 +164,8 @@ pub type Cmp<Lhs, Rhs> = <Lhs as Int>::Cmp<Rhs>;
 /// // The `-> CallFn<IntToTupleFn<usize>, L>` return type 
 /// // calls the `IntToTupleFn<usize>` type-level function with `L` as an argument.
 /// const fn recursive<L: IntToTuple>() -> CallFn<IntToTupleFn<usize>, L> {
-///     match L::PEANO_WIT {
-///         IntWit::PlusOne(len_te) => {
+///     match L::INT_WIT {
+///         IntWit::Nat(len_te) => {
 ///             len_te.project::<IntToTupleFn<usize>>()
 ///                 .to_left((L::USIZE, recursive::<L::SubOneSat>()))
 ///         }
@@ -182,7 +193,7 @@ pub type Cmp<Lhs, Rhs> = <Lhs as Int>::Cmp<Rhs>;
 ///     type Output<T> = ();
 /// }
 /// 
-/// impl<L: IntToTuple> IntToTuple for PlusOne<L> {
+/// impl<L: IntToTuple> IntToTuple for Nat<L> {
 ///     type SubOneSat_ = L;
 ///     type Output<T> = (T, L::Output<T>);
 /// }
@@ -252,6 +263,12 @@ pub trait Int:
     #[doc(hidden)]
     type __SubSat<Rhs: Int, Overflow: Bit>: Int;
 
+    #[doc(hidden)]
+    type __SubSatOverflow<Overflow: Bit>: Int;
+
+    /// Adds 1 to this int.
+    type AddOne: Int;
+
     /// Computes the addition of `Self` and `Rhs`
     /// 
     /// # Example
@@ -276,6 +293,9 @@ pub trait Int:
 
     #[doc(hidden)]
     type __Add<Rhs: Int, Overflow: Bit>: Int;
+    
+    #[doc(hidden)]
+    type __AddOverflow<Overflow: Bit>: Int;
 
     /// Computes `Self` multiplied by `Rhs`
     /// 

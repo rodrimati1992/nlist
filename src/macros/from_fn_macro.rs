@@ -4,11 +4,11 @@
 /// This macro acts like a function with this signature:
 /// 
 /// ```rust
-/// use nlist::{NList, PeanoInt};
+/// use nlist::{NList, Int};
 /// 
 /// fn rec_from_fn<F, T, L>(func: F) -> NList<T, L>
 /// where
-///     L: PeanoInt,
+///     L: Int,
 ///     F: FnOnce() -> (T, NList<T, L::SubOneSat>),
 /// # {
 /// #     nlist::rec_from_fn!(func)
@@ -30,19 +30,19 @@
 /// # type L = nlist::Peano!(4);
 /// const LIST: NList<T, L> = NList::from_array(konst::array::from_fn_!(some_closure_code));
 /// ```
-/// Caveat: this only works for small lengths (those that impl the [`IntoPeano`] trait)
+/// Caveat: this only works for small lengths (those that impl the [`IntoInt`] trait)
 /// 
 /// # Example
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt};
+/// use nlist::{NList, Peano, Int};
 /// 
 /// const POWS: NList<u128, Peano!(5)> = powers_of_two();
 /// 
 /// assert_eq!(POWS.into_array(), [1, 2, 4, 8, 16]);
 /// 
-/// const fn powers_of_two<L: PeanoInt>() -> NList<u128, L> {
-///     const fn inner<L: PeanoInt>(pow: u32) -> NList<u128, L> {
+/// const fn powers_of_two<L: Int>() -> NList<u128, L> {
+///     const fn inner<L: Int>(pow: u32) -> NList<u128, L> {
 ///         nlist::rec_from_fn!(|| (1 << pow, inner(pow + 1)))
 ///     }
 /// 
@@ -52,7 +52,7 @@
 /// 
 /// [`NList::from_array`]: crate::NList::from_array
 /// [`NList::from_fn`]: crate::NList::from_fn
-/// [`IntoPeano`]: crate::peano::IntoPeano
+/// [`IntoInt`]: crate::peano::IntoInt
 /// [`konst::array::from_fn_`]: https://docs.rs/konst/latest/konst/array/macro.from_fn_.html
 #[macro_export]
 macro_rules! rec_from_fn {
@@ -65,11 +65,11 @@ macro_rules! rec_from_fn {
 #[macro_export]
 macro_rules! __rec_from_fn {
     (|| -> $ret_ty:ty $block:block) => {
-        match <_ as $crate::PeanoInt>::PEANO_WIT {
-            $crate::PeanoWit::Zero(len_te) => {
+        match <_ as $crate::Int>::INT_WIT {
+            $crate::IntWit::Zeros(len_te) => {
                 $crate::NList::nil().coerce_len(len_te.flip())
             }
-            $crate::PeanoWit::PlusOne(len_te) => {
+            $crate::IntWit::Nat(len_te) => {
                 $crate::__::destructure!{(elem, next): $ret_ty = $block}
 
                 $crate::NList::cons(elem, next).coerce_len(len_te.flip())

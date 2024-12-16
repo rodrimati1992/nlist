@@ -6,7 +6,7 @@ use typewit::{TypeCmp, TypeEq};
 
 #[allow(unused_imports)]
 use crate::peano::{
-    self, IntoPeano, IntoUsize, PeanoInt, PeanoWit, PlusOne, SubOneSat, Usize, Zero,
+    self, IntoInt, IntoUsize, Int, IntWit, Nat, SubOneSat, Usize, Zeros,
 };
 
 #[allow(unused_imports)]
@@ -14,7 +14,7 @@ use super::{Nil, Cons, NList, NListFn, NodeFn};
 
 
 
-impl<T, L: PeanoInt> NList<T, L> {
+impl<T, L: Int> NList<T, L> {
 
     /// Finds the first element for which `predicate(&element)` returns true.
     ///
@@ -88,12 +88,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         fn inner<T, L, F, R>(list: NList<T, L>, index: usize, mut f: F) -> Option<R>
         where
-            L: PeanoInt,
+            L: Int,
             F: FnMut(usize, T) -> Option<R>,
         {
-            match L::PEANO_WIT {
-                PeanoWit::Zero { .. } => None,
-                PeanoWit::PlusOne(len_te) => {
+            match L::INT_WIT {
+                IntWit::Zeros { .. } => None,
+                IntWit::Nat(len_te) => {
                     let Cons { elem, next, .. } = list.coerce_len(len_te).node;
 
                     if let x @ Some(_) = f(index, elem) {
@@ -180,12 +180,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         fn inner<T, L, F, R>(list: NList<T, L>, index: usize, f: &mut F) -> Option<R>
         where
-            L: PeanoInt,
+            L: Int,
             F: FnMut(usize, T) -> Option<R>,
         {
-            match L::PEANO_WIT {
-                PeanoWit::Zero { .. } => None,
-                PeanoWit::PlusOne(len_te) => {
+            match L::INT_WIT {
+                IntWit::Zeros { .. } => None,
+                IntWit::Nat(len_te) => {
                     let Cons { elem, next, .. } = list.coerce_len(len_te).node;
 
                     if let x @ Some(_) = inner(next, index + 1, f) {
@@ -215,36 +215,36 @@ impl<T, L: PeanoInt> NList<T, L> {
     pub const fn reverse(self) -> NList<T, L> {
         enum ReverseState<T, LI, LA, LR>
         where
-            LI: PeanoInt,
-            LA: PeanoInt,
-            LR: PeanoInt,
+            LI: Int,
+            LA: Int,
+            LR: Int,
         {
             Iterating {
-                input_te: TypeEq<NList<T, LI>, NList<T, PlusOne<SubOneSat<LI>>>>,
+                input_te: TypeEq<NList<T, LI>, NList<T, Nat<SubOneSat<LI>>>>,
                 output_te: TypeEq<
-                    NList<T, PlusOne<LA>>,
-                    // computes the minimum of `PlusOne<LA>` and `LR`
+                    NList<T, Nat<LA>>,
+                    // computes the minimum of `Nat<LA>` and `LR`
                     // so that `inner` doesn't monomorphize to values of
                     // `LA` larger than `LR`
-                    NList<T, peano::Min<PlusOne<LA>, LR>>,
+                    NList<T, peano::Min<Nat<LA>, LR>>,
                 >,
             },
             Finished {
-                input_te: TypeEq<NList<T, LI>, NList<T, Zero>>,
+                input_te: TypeEq<NList<T, LI>, NList<T, Zeros>>,
                 output_te: TypeEq<NList<T, LA>, NList<T, LR>>,
             },
         }
 
         impl<T, LI, LA, LR> ReverseState<T, LI, LA, LR>
         where
-            LI: PeanoInt,
-            LA: PeanoInt,
-            LR: PeanoInt,
+            LI: Int,
+            LA: Int,
+            LR: Int,
         {
-            const NEW: Self = match (LI::PEANO_WIT, peano::eq::<LA, LR>()) {
-                (PeanoWit::PlusOne(input_te), TypeCmp::Ne(_)) => {
+            const NEW: Self = match (LI::INT_WIT, peano::eq::<LA, LR>()) {
+                (IntWit::Nat(input_te), TypeCmp::Ne(_)) => {
                     let TypeCmp::Eq(output_te) =
-                        peano::eq::<PlusOne<LA>, peano::Min<PlusOne<LA>, LR>>()
+                        peano::eq::<Nat<LA>, peano::Min<Nat<LA>, LR>>()
                     else {
                         concat_panic! {"somehow, LA > LR: ", LA::USIZE, " > ", LR::USIZE}
                     };
@@ -254,7 +254,7 @@ impl<T, L: PeanoInt> NList<T, L> {
                         output_te: output_te.map(NListFn::NEW),
                     }
                 }
-                (PeanoWit::Zero(input_te), TypeCmp::Eq(output_te)) => ReverseState::Finished {
+                (IntWit::Zeros(input_te), TypeCmp::Eq(output_te)) => ReverseState::Finished {
                     input_te: input_te.map(NListFn::NEW),
                     output_te: output_te.map(NListFn::NEW),
                 },
@@ -264,9 +264,9 @@ impl<T, L: PeanoInt> NList<T, L> {
 
         const fn inner<T, LI, LA, LR>(input: NList<T, LI>, output: NList<T, LA>) -> NList<T, LR>
         where
-            LI: PeanoInt,
-            LA: PeanoInt,
-            LR: PeanoInt,
+            LI: Int,
+            LA: Int,
+            LR: Int,
         {
             match ReverseState::<T, LI, LA, LR>::NEW {
                 ReverseState::Iterating {
@@ -286,9 +286,9 @@ impl<T, L: PeanoInt> NList<T, L> {
             }
         }
 
-        match L::PEANO_WIT {
-            PeanoWit::Zero { .. } => self,
-            PeanoWit::PlusOne(len_te) => {
+        match L::INT_WIT {
+            IntWit::Zeros { .. } => self,
+            IntWit::Nat(len_te) => {
                 inner(self.coerce_len(len_te), NList::nil())
                     .coerce_len(len_te.flip())
             }
@@ -310,15 +310,15 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn concat<L2>(self, other: NList<T, L2>) -> NList<T, peano::Add<L, L2>>
     where
-        L2: PeanoInt,
+        L2: Int,
     {
         const fn inner<T, LA, LB>(lhs: NList<T, LA>, rhs: NList<T, LB>) -> NList<T, peano::Add<LA, LB>>
         where
-            LA: PeanoInt,
-            LB: PeanoInt,
+            LA: Int,
+            LB: Int,
         {
-            match LA::PEANO_WIT {
-                PeanoWit::Zero(len_te) => {
+            match LA::INT_WIT {
+                IntWit::Zeros(len_te) => {
                     // works around "destructor cannot be evaluated at compile-time" error
                     _ = lhs.coerce_len(len_te);
 
@@ -328,7 +328,7 @@ impl<T, L: PeanoInt> NList<T, L> {
                     .map(NListFn::NEW)
                     .to_left(rhs)
                 }
-                PeanoWit::PlusOne(len_te) => {
+                IntWit::Nat(len_te) => {
                     destructure!{(elem, next) = lhs.coerce_len(len_te).into_split_head()}
 
                     let len_te = len_te.zip(TypeEq::new::<LB>()).map(peano::AddFn::NEW);
@@ -357,17 +357,17 @@ impl<T, L: PeanoInt> NList<T, L> {
     pub const fn zip<U>(self, other: NList<U, L>) -> NList<(T, U), L> {
         const fn inner<T, U, L>(lhs: NList<T, L>, rhs: NList<U, L>) -> NList<(T, U), L>
         where
-            L: PeanoInt,
+            L: Int,
         {
-            match L::PEANO_WIT {
-                PeanoWit::Zero(len_te) => {
+            match L::INT_WIT {
+                IntWit::Zeros(len_te) => {
                     // works around "destructor cannot be evaluated at compile-time" error
                     _ = lhs.coerce_len(len_te);
                     _ = rhs.coerce_len(len_te);
 
                     NList::nil_sub(len_te)
                 },
-                PeanoWit::PlusOne(len_te) => {
+                IntWit::Nat(len_te) => {
                     destructure!{(lhs_elem, lhs_next) = lhs.coerce_len(len_te).into_split_head()}
                     destructure!{(rhs_elem, rhs_next) = rhs.coerce_len(len_te).into_split_head()}
 
@@ -401,10 +401,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         F: FnMut(T) -> R,
     {
-        match L::PEANO_WIT {
-            PeanoWit::Zero(len_te) => NList::nil_sub(len_te),
+        match L::INT_WIT {
+            IntWit::Zeros(len_te) => NList::nil_sub(len_te),
 
-            PeanoWit::PlusOne(len_te) => {
+            IntWit::Nat(len_te) => {
                 let Cons { elem, next, .. } = self.coerce_len(len_te).node;
                 NList::cons_sub(f(elem), next.map(f), len_te)
             }
@@ -437,10 +437,10 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         fn inner<T, L, F>(list: NList<T, L>, index: usize, mut func: F)
         where
-            L: PeanoInt,
+            L: Int,
             F: FnMut(usize, T),
         {
-            if let PeanoWit::PlusOne(len_te) = L::PEANO_WIT {
+            if let IntWit::Nat(len_te) = L::INT_WIT {
                 let Cons { elem, next, .. } = list.coerce_len(len_te).node;
                 func(index, elem);
                 inner(next, index + 1, func)
@@ -505,12 +505,12 @@ impl<T, L: PeanoInt> NList<T, L> {
     {
         fn inner<T, L, F>(list: NList<T, L>, mut func: F) -> bool
         where
-            L: PeanoInt,
+            L: Int,
             F: FnMut(T) -> bool,
         {
-            match L::PEANO_WIT {
-                PeanoWit::Zero { .. } => true,
-                PeanoWit::PlusOne(len_te) => {
+            match L::INT_WIT {
+                IntWit::Zeros { .. } => true,
+                IntWit::Nat(len_te) => {
                     let Cons { elem, next, .. } = list.coerce_len(len_te).node;
                     if func(elem) {
                         inner(next, func)
@@ -550,9 +550,9 @@ impl<T, L: PeanoInt> NList<T, L> {
     where
         F: FnMut(A, T) -> A,
     {
-        match L::PEANO_WIT {
-            PeanoWit::Zero { .. } => initial_value,
-            PeanoWit::PlusOne(len_te) => {
+        match L::INT_WIT {
+            IntWit::Zeros { .. } => initial_value,
+            IntWit::Nat(len_te) => {
                 let Cons { elem, next, .. } = self.coerce_len(len_te).node;
                 next.fold(f(initial_value, elem), f)
             }
@@ -560,7 +560,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     }
 }
 
-impl<T, L: PeanoInt> NList<T, PlusOne<L>> {
+impl<T, L: Int> NList<T, Nat<L>> {
     /// Equivalent to [`fold`](NList::fold), where the head element is passed as the `initial_value`.
     ///
     /// # Example

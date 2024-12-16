@@ -11,7 +11,7 @@ macro_rules! fn_equivalent {(
 This macro acts like a function with this signature:
 
 ```rust
-use nlist::{NList, PeanoInt};
+use nlist::{NList, Int};
 
 use nlist::receiver::Receiver;
 # use nlist::receiver::HktApply;
@@ -21,7 +21,7 @@ fn ", $fn_name,"<'a, P, T, L, F",
 ">(list: P ", $(", ", $additional_params,)? ", func: F) -> ", $fn_ret,"
 where
     P: Receiver<'a, NList<T, L>>,
-    L: PeanoInt,
+    L: Int,
     T: 'a,
     F: FnOnce(
         # /*
@@ -74,7 +74,7 @@ use early_termination_warning;
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const ALL_EVEN: bool = all_even(&nlist![3, 5, 8]);
 /// 
@@ -82,7 +82,7 @@ use early_termination_warning;
 /// 
 /// const fn all_even<L>(list: &NList<u128, L>) -> bool
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_all!{list, |elem: &u128, next| *elem % 2 == 0 && all_even(next)}
 /// }
@@ -93,7 +93,7 @@ use early_termination_warning;
 /// Example that takes an `NList` of `Copy` elements by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// use std::mem::ManuallyDrop as MD;
 /// 
@@ -106,7 +106,7 @@ use early_termination_warning;
 /// 
 /// const fn all_odd<L>(list: NList<u128, L>) -> bool
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_all!{list, |elem: u128, next| {
 ///         // works around "destructor cannot be evaluated at compile-time" error
@@ -165,7 +165,7 @@ macro_rules! __rec_all {
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const EVEN_IN_EMPTY: bool = any_even(&nlist![]);
 /// assert!(!EVEN_IN_EMPTY);
@@ -176,7 +176,7 @@ macro_rules! __rec_all {
 /// 
 /// const fn any_even<L>(list: &NList<u128, L>) -> bool
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_any!{list, |elem: &u128, next| *elem % 2 == 0 || any_even(next)}
 /// }
@@ -187,7 +187,7 @@ macro_rules! __rec_all {
 /// Example that takes an `NList` of `Copy` elements by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// use std::mem::ManuallyDrop as MD;
 /// 
@@ -197,7 +197,7 @@ macro_rules! __rec_all {
 /// 
 /// const fn any_odd<L>(list: NList<u128, L>) -> bool
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_any!{list, |elem: u128, next| {
 ///         // works around "destructor cannot be evaluated at compile-time" error
@@ -257,7 +257,7 @@ macro_rules! __rec_any {
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const EMPTY: Option<i128> = finder(&nlist![]);
 /// assert!(EMPTY.is_none());
@@ -268,7 +268,7 @@ macro_rules! __rec_any {
 /// 
 /// const fn finder<L>(list: &NList<u128, L>) -> Option<i128>
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_find_map!{list, |elem: &u128, next| {
 ///         if *elem % 4 == 1 {
@@ -285,7 +285,7 @@ macro_rules! __rec_any {
 /// Example that takes an `NList` of `Copy` elements by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// use std::mem::ManuallyDrop as MD;
 /// 
@@ -298,7 +298,7 @@ macro_rules! __rec_any {
 /// 
 /// const fn finder<L>(list: NList<u128, L>) -> Option<u8>
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_find_map!{list, |elem: u128, next| {
 ///         // works around "destructor cannot be evaluated at compile-time" error
@@ -361,7 +361,7 @@ macro_rules! __rec_find_map {
 /// Example that takes an `NList` by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const LIST: NList<u128, Peano!(3)> = double(nlist![3, 5, 8]);
 /// 
@@ -369,7 +369,7 @@ macro_rules! __rec_find_map {
 /// 
 /// const fn double<L>(list: NList<u128, L>) -> NList<u128, L>
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_map!{list, |elem: u128, next| (elem * 2, double(next))}
 /// }
@@ -380,7 +380,7 @@ macro_rules! __rec_find_map {
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const LIST: NList<u128, Peano!(3)> = double(&nlist![3, 5, 8]);
 /// 
@@ -388,7 +388,7 @@ macro_rules! __rec_find_map {
 /// 
 /// const fn double<L>(list: &NList<u128, L>) -> NList<u128, L>
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_map!{list, |elem: &u128, next| (*elem * 2, double(next))}
 /// }
@@ -438,7 +438,7 @@ macro_rules! __rec_map {
 /// Example that takes an `NList` by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const SUM: u128 = {
 ///     let mut sum = 0;
@@ -450,7 +450,7 @@ macro_rules! __rec_map {
 /// 
 /// const fn add_to<L>(mutator: &mut u128, list: NList<u128, L>)
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_for_each!{list, |elem: u128, next| { 
 ///         *mutator += elem;
@@ -464,7 +464,7 @@ macro_rules! __rec_map {
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const SUM: u128 = {
 ///     let mut sum = 0;
@@ -476,7 +476,7 @@ macro_rules! __rec_map {
 /// 
 /// const fn add_to<L>(mutator: &mut u128, list: &NList<u128, L>)
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_for_each!{list, |elem: &u128, next| { 
 ///         *mutator += *elem;
@@ -536,7 +536,7 @@ macro_rules! __rec_for_each {
 /// Example that takes an `NList` by value
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const SUM: u128 = add_up(0, nlist![1, 2, 3, 4, 5]);
 /// 
@@ -544,7 +544,7 @@ macro_rules! __rec_for_each {
 /// 
 /// const fn add_up<L>(sum: u128, list: NList<u128, L>) -> u128
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_fold!{list, sum, |elem: u128, next| add_up(sum + elem, next)}
 /// }
@@ -555,7 +555,7 @@ macro_rules! __rec_for_each {
 /// Example that takes an `NList` by reference
 /// 
 /// ```rust
-/// use nlist::{NList, Peano, PeanoInt, nlist};
+/// use nlist::{NList, Peano, Int, nlist};
 /// 
 /// const SUM: u128 = add_up(0, &nlist![3, 5, 8]);
 /// 
@@ -563,7 +563,7 @@ macro_rules! __rec_for_each {
 /// 
 /// const fn add_up<L>(sum: u128, list: &NList<u128, L>) -> u128
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     nlist::rec_fold!{list, sum, |elem: &u128, next| add_up(sum + *elem, next)}
 /// }
@@ -610,13 +610,13 @@ macro_rules! __rec_shared {
     ) => {
         match $in_list {in_list => {
             match $crate::NList::len_proof($crate::receiver::as_ref(&in_list)) {
-                $crate::PeanoWit::Zero($len_te) => {
+                $crate::IntWit::Zeros($len_te) => {
                     // works around "destructor cannot be evaluated at compile-time" error
                     _ = $crate::NList::coerce_len_poly(in_list, $len_te);
                     
                     $on_nil
                 }
-                $crate::PeanoWit::PlusOne($len_te) => {
+                $crate::IntWit::Nat($len_te) => {
                     $crate::__::destructure!{
                         ($elem, $next) = $crate::NList::split_head_poly(
                             $crate::NList::coerce_len_poly(in_list, $len_te)

@@ -1,5 +1,5 @@
 use nlist::boolean::{Bool, Boolean, BoolWitG};
-use nlist::peano::{self, Peano, PeanoInt, Zero, proofs};
+use nlist::peano::{self, Peano, Int, Zeros, proofs};
 use nlist::typewit::TypeEq;
 
 use crate::misc_tests::test_utils::assert_type;
@@ -68,8 +68,8 @@ macro_rules! call_with_ternary {
 fn commutative_add_test() {
     fn inner<A, B>() 
     where
-        A: PeanoInt,
-        B: PeanoInt,
+        A: Int,
+        B: Int,
     {
         let ret = const { proofs::commutative_add::<A, B>() };
         assert_type::<TypeEq<peano::Add<A, B>, peano::Add<B, A>>>(ret);
@@ -81,8 +81,8 @@ fn commutative_add_test() {
 fn commutative_mul_test() {
     fn inner<A, B>() 
     where
-        A: PeanoInt,
-        B: PeanoInt,
+        A: Int,
+        B: Int,
     {
         let ret = const { proofs::commutative_mul::<A, B>() };
         assert_type::<TypeEq<peano::Mul<A, B>, peano::Mul<B, A>>>(ret);
@@ -96,10 +96,10 @@ fn commutative_mul_test() {
 fn add_identity_test() {
     fn inner<A>() 
     where
-        A: PeanoInt,
+        A: Int,
     {
         let ret = const { proofs::add_identity::<A>() };
-        assert_type::<TypeEq<peano::Add<A, Zero>, A>>(ret);
+        assert_type::<TypeEq<peano::Add<A, Zeros>, A>>(ret);
     }
 
     call_with_unary!{inner}
@@ -108,10 +108,10 @@ fn add_identity_test() {
 fn sub_identity_test() {
     fn inner<A>() 
     where
-        A: PeanoInt,
+        A: Int,
     {
         let ret = const { proofs::sub_identity::<A>() };
-        assert_type::<TypeEq<peano::SubSat<A, Zero>, A>>(ret);
+        assert_type::<TypeEq<peano::SubSat<A, Zeros>, A>>(ret);
     }
 
     call_with_unary!{inner}
@@ -120,9 +120,9 @@ fn sub_identity_test() {
 fn compose_sub_lt_test() {
     fn inner<A, B, C>() 
     where
-        A: PeanoInt,
-        B: PeanoInt,
-        C: PeanoInt,
+        A: Int,
+        B: Int,
+        C: Int,
     {
         let ret = const { 
             match peano::IsLt::<A, C>::BOOL_WIT {

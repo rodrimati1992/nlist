@@ -1,5 +1,5 @@
 use nlist::{Peano, peano};
-use nlist::peano::{IntoPeano, PeanoInt, PeanoWit, FromUsize, IntoUsize, PlusOne, Usize, Zero};
+use nlist::peano::{IntoInt, Int, IntWit, FromUsize, IntoUsize, Nat, Usize, Zeros};
 use nlist::typewit::TypeCmp;
 
 use crate::misc_tests::test_utils::{assertm, assert_type, assert_type_eq};
@@ -15,21 +15,21 @@ fn peano_repr_test() {
     }
 
     test_cases! {
-        (0 Zero)
-        (1 PlusOne<Zero>)
-        (2 PlusOne<PlusOne<Zero>>)
-        (3 PlusOne<PlusOne<PlusOne<Zero>>>)
-        (4 PlusOne<PlusOne<PlusOne<PlusOne<Zero>>>>)
+        (0 Zeros)
+        (1 Nat<Zeros>)
+        (2 Nat<Nat<Zeros>>)
+        (3 Nat<Nat<Nat<Zeros>>>)
+        (4 Nat<Nat<Nat<Nat<Zeros>>>>)
     }
 }
 
 #[test]
 fn peano_wit_test() {
-    assertm!(<Peano!(0)>::PEANO_WIT, PeanoWit::Zero{..});
-    assertm!(<Peano!(1)>::PEANO_WIT, PeanoWit::PlusOne{..});
-    assertm!(<Peano!(2)>::PEANO_WIT, PeanoWit::PlusOne{..});
-    assertm!(<Peano!(3)>::PEANO_WIT, PeanoWit::PlusOne{..});
-    assertm!(<Peano!(4)>::PEANO_WIT, PeanoWit::PlusOne{..});
+    assertm!(<Peano!(0)>::INT_WIT, IntWit::Zeros{..});
+    assertm!(<Peano!(1)>::INT_WIT, IntWit::Nat{..});
+    assertm!(<Peano!(2)>::INT_WIT, IntWit::Nat{..});
+    assertm!(<Peano!(3)>::INT_WIT, IntWit::Nat{..});
+    assertm!(<Peano!(4)>::INT_WIT, IntWit::Nat{..});
 }
 
 
@@ -37,23 +37,23 @@ fn peano_wit_test() {
 fn peano_value_test() {
     const fn to_usize<L, const U: usize>(_peano: L) -> usize
     where
-        L: PeanoInt + IntoUsize<Usize = Usize<U>>
+        L: Int + IntoUsize<Usize = Usize<U>>
     {
         U
     }
 
     const fn to_peano<const U: usize>() -> FromUsize<U>
     where
-        Usize<U>: IntoPeano
+        Usize<U>: IntoInt
     {
-        PeanoInt::NEW
+        Int::NEW
     }
 
 
     macro_rules! test_cases {
         ($($n:literal)*) => ($({
             assert_eq!(to_usize(peano!($n)), $n);
-            assert_eq!(<Peano!($n) as PeanoInt>::USIZE, $n);
+            assert_eq!(<Peano!($n) as Int>::USIZE, $n);
             assert_eq!(to_peano::<$n>(), peano!($n));
         })*)
     }

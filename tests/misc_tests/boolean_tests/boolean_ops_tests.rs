@@ -1,4 +1,4 @@
-use nlist::{Peano, PeanoInt};
+use nlist::{Peano, Int};
 use nlist::boolean::{self, Bool, Boolean};
 use nlist::typewit::Identity;
 
@@ -97,8 +97,8 @@ fn iftruepi_test() {
     fn _alt_fn_is_equivalent<B, Then, Else>() 
     where
         B: Boolean,
-        Then: PeanoInt,
-        Else: PeanoInt,
+        Then: Int,
+        Else: Int,
     {
         let _: typewit::TypeEq<
             typewit::CallFn<boolean::IfTruePIAltFn<Then, Else>, B>,
@@ -107,7 +107,7 @@ fn iftruepi_test() {
     }
 
     test_op! {
-        Boolean::IfTrueI<Then, Else> IfTrueI IfTruePIFn, PeanoInt -> PeanoInt, boolean =>
+        Boolean::IfTrueI<Then, Else> IfTrueI IfTruePIFn, Int -> Int, boolean =>
         (Bool<false>, Peano!(3), Peano!(5) => Peano!(5))
         (Bool<false>, Peano!(8), Peano!(13) => Peano!(13))
         (Bool<true>, Peano!(3), Peano!(5) => Peano!(3))

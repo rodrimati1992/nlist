@@ -1,4 +1,4 @@
-use nlist::{Peano, PeanoInt, peano};
+use nlist::{Peano, Int, peano};
 use nlist::boolean::{Bool, Boolean};
 use nlist::typewit::{CallFn, Identity};
 
@@ -10,7 +10,7 @@ use crate::misc_tests::test_utils::{assert_type_eq, test_op, test_nonassoc_op};
 #[test]
 fn sub_one_sat_test() {
     test_op! {
-        PeanoInt::SubOneSat<> SubOneSat SubOneSatFn, PeanoInt -> PeanoInt, peano =>
+        Int::SubOneSat<> SubOneSat SubOneSatFn, Int -> Int, peano =>
         (Peano!(0) => Peano!(0))
         (Peano!(1) => Peano!(0))
         (Peano!(2) => Peano!(1))
@@ -21,7 +21,7 @@ fn sub_one_sat_test() {
 #[test]
 fn is_zero_test() {
     test_op! {
-        PeanoInt::IsZero<> IsZero IsZeroFn, PeanoInt -> Boolean, peano => 
+        Int::IsZero<> IsZero IsZeroFn, Int -> Boolean, peano => 
         (Peano!(0) => Bool<true>)
         (Peano!(1) => Bool<false>)
         (Peano!(2) => Bool<false>)
@@ -32,7 +32,7 @@ fn is_zero_test() {
 #[test]
 fn sub_sat_test() {
     test_op! {
-        PeanoInt::SubSat<Rhs> SubSat SubSatFn, PeanoInt -> PeanoInt, peano => 
+        Int::SubSat<Rhs> SubSat SubSatFn, Int -> Int, peano => 
         (Peano!(0), Peano!(0) => Peano!(0))
         (Peano!(0), Peano!(1) => Peano!(0))
         (Peano!(0), Peano!(2) => Peano!(0))
@@ -58,7 +58,7 @@ fn sub_sat_test() {
 #[test]
 fn add_test() {
     test_op! {
-        PeanoInt::Add<Rhs> Add AddFn, PeanoInt -> PeanoInt, peano => 
+        Int::Add<Rhs> Add AddFn, Int -> Int, peano => 
         (Peano!(0), Peano!(0) => Peano!(0))
         (Peano!(0), Peano!(1) => Peano!(1))
         (Peano!(0), Peano!(2) => Peano!(2))
@@ -76,7 +76,7 @@ fn add_test() {
 #[test]
 fn mul_test() {
     test_op! {
-        PeanoInt::Mul<Rhs> Mul MulFn, PeanoInt -> PeanoInt, peano => 
+        Int::Mul<Rhs> Mul MulFn, Int -> Int, peano => 
         (Peano!(0), Peano!(0) => Peano!(0))
         (Peano!(0), Peano!(1) => Peano!(0))
         (Peano!(0), Peano!(2) => Peano!(0))
@@ -102,7 +102,7 @@ fn mul_test() {
 #[test]
 fn min_test() {
     test_op! {
-        PeanoInt::Min<Rhs> Min MinFn, PeanoInt -> PeanoInt, peano => 
+        Int::Min<Rhs> Min MinFn, Int -> Int, peano => 
         (Peano!(0), Peano!(0) => Peano!(0))
         (Peano!(0), Peano!(1) => Peano!(0))
         (Peano!(0), Peano!(2) => Peano!(0))
@@ -128,7 +128,7 @@ fn min_test() {
 #[test]
 fn max_test() {
     test_op! {
-        PeanoInt::Max<Rhs> Max MaxFn, PeanoInt -> PeanoInt, peano => 
+        Int::Max<Rhs> Max MaxFn, Int -> Int, peano => 
         (Peano!(0), Peano!(0) => Peano!(0))
         (Peano!(0), Peano!(1) => Peano!(1))
         (Peano!(0), Peano!(2) => Peano!(2))
@@ -154,7 +154,7 @@ fn max_test() {
 #[test]
 fn is_lt_test() {
     test_op! {
-        PeanoInt::IsLt<Rhs> IsLt IsLtFn, PeanoInt -> Boolean, peano => 
+        Int::IsLt<Rhs> IsLt IsLtFn, Int -> Boolean, peano => 
         (Peano!(0), Peano!(0) => Bool<false>)
         (Peano!(0), Peano!(1) => Bool<true>)
         (Peano!(0), Peano!(2) => Bool<true>)
@@ -180,7 +180,7 @@ fn is_lt_test() {
 #[test]
 fn is_le_test() {
     test_op! {
-        PeanoInt::IsLe<Rhs> IsLe IsLeFn, PeanoInt -> Boolean, peano => 
+        Int::IsLe<Rhs> IsLe IsLeFn, Int -> Boolean, peano => 
         (Peano!(0), Peano!(0) => Bool<true>)
         (Peano!(0), Peano!(1) => Bool<true>)
         (Peano!(0), Peano!(2) => Bool<true>)
@@ -209,7 +209,7 @@ fn is_le_test() {
 fn if_zero_test() {
     fn _alt_fn_is_equivalent<This, Then, Else>() 
     where
-        This: PeanoInt,
+        This: Int,
     {
         let _: typewit::TypeEq<
             typewit::CallFn<peano::IfZeroAltFn<Then, Else>, This>,
@@ -218,7 +218,7 @@ fn if_zero_test() {
     }
 
     test_nonassoc_op! {
-        PeanoInt IfZero<A, B> IfZeroFn, Identity -> Identity, peano =>
+        Int IfZero<A, B> IfZeroFn, Identity -> Identity, peano =>
 
         (Peano!(0), u8, u16 => u8)
         (Peano!(1), u8, u16 => u16)
@@ -231,9 +231,9 @@ fn if_zero_test() {
 fn if_zero_pi_test() {
     fn _alt_fn_is_equivalent<This, Then, Else>() 
     where
-        This: PeanoInt,
-        Then: PeanoInt,
-        Else: PeanoInt,
+        This: Int,
+        Then: Int,
+        Else: Int,
     {
         let _: typewit::TypeEq<
             typewit::CallFn<peano::IfZeroIAltFn<Then, Else>, This>,
@@ -242,7 +242,7 @@ fn if_zero_pi_test() {
     }
 
     test_nonassoc_op! {
-        PeanoInt IfZeroI<A, B> IfZeroIFn, PeanoInt -> PeanoInt, peano =>
+        Int IfZeroI<A, B> IfZeroIFn, Int -> Int, peano =>
 
         (Peano!(0), Peano!(10), Peano!(20) => Peano!(10))
         (Peano!(1), Peano!(11), Peano!(21) => Peano!(21))

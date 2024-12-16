@@ -8,9 +8,9 @@ use konst::destructure;
 use typewit::{type_fn, CallFn, TypeCmp, TypeEq};
 
 use super::{NList, NList2D, NListFn};
-use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
+use crate::peano::{self, Int, IntWit, Nat, SubOneSat, Zeros};
 
-impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
+impl<T, L: Int, L2: Int> NList<NList<T, L2>, L> {
     /// Flattens a nested list.
     ///
     /// # Example
@@ -38,14 +38,14 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
         // LRet: the length of the `NList<T, LRet>` that we're expected to return
         enum FlattenState<T, LSub, LOuter, LInner, LAcc, LRet>
         where
-            LSub: PeanoInt,
-            LOuter: PeanoInt,
-            LInner: PeanoInt,
-            LAcc: PeanoInt,
-            LRet: PeanoInt,
+            LSub: Int,
+            LOuter: Int,
+            LInner: Int,
+            LAcc: Int,
+            LRet: Int,
         {
             Iterating {
-                lsub_wit: PeanoWit<LSub>,
+                lsub_wit: IntWit<LSub>,
                 // ManuallyDrop is necessary because the compiler doesn't know 
                 // that this is non-Drop
                 state_wit: ManuallyDrop<
@@ -53,8 +53,8 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                 >,
             },
             Finished {
-                outer_len: TypeEq<LOuter, Zero>,
-                sub_len: TypeEq<LSub, Zero>,
+                outer_len: TypeEq<LOuter, Zeros>,
+                sub_len: TypeEq<LSub, Zeros>,
                 output_te: TypeEq<NList<T, LAcc>, NList<T, LRet>>,
             },
         }
@@ -68,11 +68,11 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                 IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>,
             >
             where
-                LSub: PeanoInt,
-                LOuter: PeanoInt,
-                LInner: PeanoInt,
-                LAcc: PeanoInt,
-                LRet: PeanoInt,
+                LSub: Int,
+                LOuter: Int,
+                LInner: Int,
+                LAcc: Int,
+                LRet: Int,
         }
 
         typewit::type_fn! {
@@ -81,13 +81,13 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
             impl<LSub, LOuter> (LSub, LOuter) => peano::IfZeroI<
                 LSub,
-                peano::IfZeroI<LOuter, Zero, LInner>,
+                peano::IfZeroI<LOuter, Zeros, LInner>,
                 SubOneSat<LSub>,
             >
             where
-                LSub: PeanoInt,
-                LOuter: PeanoInt,
-                LInner: PeanoInt;
+                LSub: Int,
+                LOuter: Int,
+                LInner: Int;
         }
 
         typewit::type_fn! {
@@ -97,32 +97,32 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             impl<LSub> LSub => (
                 NList<T, CallFn<SubTailLenFn<LInner>, (LSub, LOuter)>>,
                 NList2D<T, peano::IfZeroI<LSub, SubOneSat<LOuter>, LOuter>, LInner>,
-                NList<T, peano::IfZeroI<LSub, LAcc, peano::Min<PlusOne<LAcc>, LRet>>>,
+                NList<T, peano::IfZeroI<LSub, LAcc, peano::Min<Nat<LAcc>, LRet>>>,
             )
             where
-                LSub: PeanoInt,
-                LOuter: PeanoInt,
-                LInner: PeanoInt,
-                LAcc: PeanoInt,
-                LRet: PeanoInt,
+                LSub: Int,
+                LOuter: Int,
+                LInner: Int,
+                LAcc: Int,
+                LRet: Int,
         }
 
         // Witnesses for iteration over an `NList<T>`
         struct IteratingInner<T, LSub, LOuter, LInner, LAcc, LRet>
         where
-            LSub: PeanoInt,
-            LOuter: PeanoInt,
-            LInner: PeanoInt,
-            LAcc: PeanoInt,
-            LRet: PeanoInt,
+            LSub: Int,
+            LOuter: Int,
+            LInner: Int,
+            LAcc: Int,
+            LRet: Int,
         {
             // Witness that the returned NList is at most `LRet` elements long
             output_te: TypeEq<
-                NList<T, PlusOne<LAcc>>,
-                // computes the minimum of `PlusOne<LAcc>` and `LRet`
+                NList<T, Nat<LAcc>>,
+                // computes the minimum of `Nat<LAcc>` and `LRet`
                 // so that `inner` doesn't monomorphize to values of
                 // `LAcc` larger than `LRet`
-                NList<T, peano::Min<PlusOne<LAcc>, LRet>>,
+                NList<T, peano::Min<Nat<LAcc>, LRet>>,
             >,
             _phantom: PhantomData<fn() -> (T, LSub, LOuter, LInner, LAcc, LRet)>,
         }
@@ -130,19 +130,19 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
         // Witnesses for iteration over an `NList2D<T, LOuter, LInner>`
         struct IteratingOuter<T, LSub, LOuter, LInner, LAcc, LRet>
         where
-            LSub: PeanoInt,
-            LOuter: PeanoInt,
-            LInner: PeanoInt,
-            LAcc: PeanoInt,
-            LRet: PeanoInt,
+            LSub: Int,
+            LOuter: Int,
+            LInner: Int,
+            LAcc: Int,
+            LRet: Int,
         {
             // Witness that the `NList2D` has at least one more sublist:
             // ```
             // NList2D<T, LOuter                    , LInner> ==
-            // NList2D<T, PlusOne<LOuter::SubOneSat>, LInner>
+            // NList2D<T, Nat<LOuter::SubOneSat>, LInner>
             // ```
             outer_te:
-                TypeEq<NList2D<T, LOuter, LInner>, NList2D<T, PlusOne<LOuter::SubOneSat>, LInner>>,
+                TypeEq<NList2D<T, LOuter, LInner>, NList2D<T, Nat<LOuter::SubOneSat>, LInner>>,
             // Witness that the next sublist is `LInner` long
             //
             // `CallFn<SubTailLenFn<LInner>, (LSub, LOuter)> == LInner`
@@ -152,20 +152,20 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
         impl<T, LSub, LOuter, LInner, LAcc, LRet> FlattenState<T, LSub, LOuter, LInner, LAcc, LRet>
         where
-            LSub: PeanoInt,
-            LOuter: PeanoInt,
-            LInner: PeanoInt,
-            LAcc: PeanoInt,
-            LRet: PeanoInt,
+            LSub: Int,
+            LOuter: Int,
+            LInner: Int,
+            LAcc: Int,
+            LRet: Int,
         {
             const NEW: Self = match (
-                LSub::PEANO_WIT,
-                LOuter::PEANO_WIT,
+                LSub::INT_WIT,
+                LOuter::INT_WIT,
                 peano::eq::<LAcc, LRet>(),
             ) {
-                (lsub_wit @ PeanoWit::PlusOne(sub_te), _, TypeCmp::Ne(_)) => {
+                (lsub_wit @ IntWit::Nat(sub_te), _, TypeCmp::Ne(_)) => {
                     let TypeCmp::Eq(output_te) = 
-                        peano::eq::<PlusOne<LAcc>, peano::Min<PlusOne<LAcc>, LRet>>() 
+                        peano::eq::<Nat<LAcc>, peano::Min<Nat<LAcc>, LRet>>() 
                     else {
                         concat_panic! {"somehow, LAcc > LRet: ", LAcc::USIZE, " > ", LRet::USIZE}
                     };
@@ -183,8 +183,8 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                     }
                 }
                 (
-                    lsub_wit @ PeanoWit::Zero(sub_te),
-                    PeanoWit::PlusOne(outer_te),
+                    lsub_wit @ IntWit::Zeros(sub_te),
+                    IntWit::Nat(outer_te),
                     TypeCmp::Ne(_),
                 ) => FlattenState::Iterating {
                     lsub_wit,
@@ -193,21 +193,21 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                         .project::<IteratingWhatFn<T, LOuter, LInner, LAcc, LRet>>()
                         .to_left(IteratingOuter {
                             outer_te: outer_te.map(NListFn::NEW),
-                            tail_te: TypeEq::new::<Zero>()
+                            tail_te: TypeEq::new::<Zeros>()
                                 .zip(outer_te)
                                 .map(SubTailLenFn::<LInner>::NEW),
                             _phantom: PhantomData,
                         })
                     ),
                 },
-                (PeanoWit::Zero(sub_len), PeanoWit::Zero(outer_len), TypeCmp::Eq(output_te)) => {
+                (IntWit::Zeros(sub_len), IntWit::Zeros(outer_len), TypeCmp::Eq(output_te)) => {
                     FlattenState::Finished {
                         outer_len,
                         sub_len,
                         output_te: output_te.map(NListFn::NEW),
                     }
                 }
-                (PeanoWit::Zero(_), PeanoWit::Zero(_), TypeCmp::Ne(_)) => concat_panic! {
+                (IntWit::Zeros(_), IntWit::Zeros(_), TypeCmp::Ne(_)) => concat_panic! {
                     "finished iteration but LAcc != LRet, ",
                     " LAcc: " , LAcc::USIZE,
                     " LRet: ", LRet::USIZE
@@ -229,11 +229,11 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
             output: NList<T, LAcc>,
         ) -> NList<T, LRet>
         where
-            LSub: PeanoInt,
-            LOuter: PeanoInt,
-            LInner: PeanoInt,
-            LAcc: PeanoInt,
-            LRet: PeanoInt,
+            LSub: Int,
+            LOuter: Int,
+            LInner: Int,
+            LAcc: Int,
+            LRet: Int,
         {
             match FlattenState::<T, LSub, LOuter, LInner, LAcc, LRet>::NEW {
                 FlattenState::Iterating {
@@ -247,7 +247,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
                         CallArgsFn<T, LOuter, LInner, LAcc, LRet>,
                         LSub,
                     > = match lsub_wit {
-                        PeanoWit::Zero(zero_wit) => {
+                        IntWit::Zeros(zero_wit) => {
                             // works around "destructor cannot be evaluated at compile-time" error
                             _ = sub.coerce_len(zero_wit);
 
@@ -263,7 +263,7 @@ impl<T, L: PeanoInt, L2: PeanoInt> NList<NList<T, L2>, L> {
 
                             zero_wit.map(cargfn).to_left((newsub, tail, output))
                         }
-                        PeanoWit::PlusOne(one_wit) => {
+                        IntWit::Nat(one_wit) => {
                             let IteratingInner { output_te, .. } =
                                 one_wit.map(swfn).to_right(ManuallyDrop::into_inner(state_wit));
 
@@ -316,47 +316,47 @@ typewit::type_fn! {
 
     impl<LOuter, LInner> (LOuter, LInner) => NList<NList<T, LInner>, LOuter>
     where
-        LOuter: PeanoInt,
-        LInner: PeanoInt,        
+        LOuter: Int,
+        LInner: Int,        
 }
 
 enum FlattenWit<T, LOuter, LInner> 
 where
-    LOuter: PeanoInt,
-    LInner: PeanoInt,
+    LOuter: Int,
+    LInner: Int,
 {
     ReturnsNonEmpty {
         arg_te: TypeEq<
             NList<NList<T, LInner>, LOuter>,
-            NList<NList<T, PlusOne<LInner::SubOneSat>>, PlusOne<LOuter::SubOneSat>>,
+            NList<NList<T, Nat<LInner::SubOneSat>>, Nat<LOuter::SubOneSat>>,
         >,
         ret_te: TypeEq<
             NList<T, peano::Mul<LOuter, LInner>>, 
-            NList<T, peano::Mul<PlusOne<LOuter::SubOneSat>, PlusOne<LInner::SubOneSat>>>,
+            NList<T, peano::Mul<Nat<LOuter::SubOneSat>, Nat<LInner::SubOneSat>>>,
         >,
     },
     ReturnsEmpty(
         TypeEq<
             NList<T, peano::Mul<LOuter, LInner>>, 
-            NList<T, Zero>, 
+            NList<T, Zeros>, 
         >
     ),
 }
 
 impl<T, LOuter, LInner> FlattenWit<T, LOuter, LInner>
 where
-    LOuter: PeanoInt,
-    LInner: PeanoInt,
+    LOuter: Int,
+    LInner: Int,
 {
-    const NEW: Self = match (LOuter::PEANO_WIT, LInner::PEANO_WIT) {
-        (PeanoWit::PlusOne(louter_te), PeanoWit::PlusOne(linner_te)) => {
+    const NEW: Self = match (LOuter::INT_WIT, LInner::INT_WIT) {
+        (IntWit::Nat(louter_te), IntWit::Nat(linner_te)) => {
             let arg_te = louter_te.zip(linner_te).map(NList2DFn::NEW);
 
             let ret_te = louter_te.zip(linner_te).map(peano::MulFn::NEW).map(NListFn::NEW);
 
             Self::ReturnsNonEmpty { arg_te, ret_te }
         }
-        (PeanoWit::Zero(louter_te), _) => {
+        (IntWit::Zeros(louter_te), _) => {
             let ret_te = louter_te
                 .zip(TypeEq::new::<LInner>())
                 .map(peano::MulFn::NEW)
@@ -364,11 +364,11 @@ where
 
             Self::ReturnsEmpty(ret_te)
         }
-        (_, PeanoWit::Zero(linner_te)) => {
+        (_, IntWit::Zeros(linner_te)) => {
             let ret_te = TypeEq::new::<LOuter>()
                 .zip(linner_te)
                 .map(peano::MulFn::NEW)
-                .join(peano::proofs::commutative_mul::<LOuter, Zero>())
+                .join(peano::proofs::commutative_mul::<LOuter, Zeros>())
                 .map(NListFn::NEW);
 
             Self::ReturnsEmpty(ret_te)

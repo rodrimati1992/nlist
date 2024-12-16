@@ -1,4 +1,4 @@
-use nlist::{Cons, Peano, PeanoInt, Nil, NList, nlist};
+use nlist::{Cons, Peano, Int, Nil, NList, nlist};
 
 use crate::misc_tests::test_utils::{assertm, assert_type};
 
@@ -113,7 +113,7 @@ fn nlist_macro_repeat_test() {
     const fn repat<T, const N: usize>(val: T) -> NList<T, Peano!(N)>
     where
         T: Copy,
-        typewit::const_marker::Usize<N>: nlist::peano::IntoPeano,
+        typewit::const_marker::Usize<N>: nlist::peano::IntoInt,
     {
         nlist![val; N]
     }
@@ -129,7 +129,7 @@ fn nlist_macro_repeat_infer_test() {
     const fn repat<T, L>(val: T) -> NList<T, L>
     where
         T: Copy,
-        L: PeanoInt,
+        L: Int,
     {
         nlist![val; _]
     }
@@ -147,7 +147,7 @@ fn repeat_copy_test() {
     const fn repeat_from_any_copy_type<T, L>(val: T) -> NList<T, L>
     where
         T: Copy,
-        L: PeanoInt,
+        L: Int,
     {
         NList::repeat_copy(val)
     }
@@ -173,14 +173,14 @@ fn rec_from_fn_test() {
         ($($macro_arg:tt)*) => ({
             const fn ctor_pair<LNext>() -> (u128, NList<u128, LNext>)
             where
-                LNext: PeanoInt
+                LNext: Int
             {
                 ((LNext::USIZE * 3) as u128, ctor())
             }
 
             const fn ctor<L>() -> NList<u128, L>
             where
-                L: PeanoInt
+                L: Int
             {
                 nlist::rec_from_fn!($($macro_arg)*)
             }

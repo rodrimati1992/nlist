@@ -1,6 +1,6 @@
 use core::mem::ManuallyDrop as MD;
 
-use nlist::{Peano, PeanoInt, NList, nlist};
+use nlist::{Peano, Int, NList, nlist};
 use nlist::peano::{IntoUsize, Usize};
 
 use crate::misc_tests::test_utils::assert_type;
@@ -11,7 +11,7 @@ fn assert_copy_drop_test() {
     const fn inner<T, L>(list: NList<T, L>) 
     where
         T: Copy, 
-        L: PeanoInt
+        L: Int
     {
         list.assert_copy_drop();
     }
@@ -27,7 +27,7 @@ fn assert_copy_test() {
     const fn inner<T, L>(list: NList<T, L>) -> MD<NList<T, L>>
     where
         T: Copy, 
-        L: PeanoInt
+        L: Int
     {
         list.assert_copy()
     }
@@ -50,7 +50,7 @@ fn assert_copy_test() {
 fn each_ref_test() {
     const fn inner<T, L>(list: &NList<T, L>) -> NList<&T, L>
     where
-        L: PeanoInt
+        L: Int
     {
         list.each_ref()
     }
@@ -72,7 +72,7 @@ fn each_ref_test() {
 fn each_mut_test() {
     const fn inner<T, L>(list: &mut NList<T, L>) -> NList<&mut T, L>
     where
-        L: PeanoInt
+        L: Int
     {
         list.each_mut()
     }
@@ -95,7 +95,7 @@ fn into_vec_test() {
     // making sure there's no length restriction
     fn inner<T, L>(list: NList<T, L>) -> Vec<T>
     where
-        L: PeanoInt
+        L: Int
     {
         list.into_vec()
     }
@@ -117,7 +117,7 @@ fn into_vec_test() {
 fn into_array_test() {
     const fn inner<T, L, const U: usize>(list: NList<T, L>) -> [T; U]
     where
-        L: PeanoInt + IntoUsize<Usize = Usize<U>>
+        L: Int + IntoUsize<Usize = Usize<U>>
     {
         list.into_array()
     }

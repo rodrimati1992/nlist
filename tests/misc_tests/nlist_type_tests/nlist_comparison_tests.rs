@@ -1,6 +1,6 @@
 use core::cmp::{Ordering, Ord, PartialOrd};
 
-use nlist::{PeanoInt, NList, nlist};
+use nlist::{Int, NList, nlist};
 
 #[test]
 fn total_eq_test() {
@@ -8,8 +8,8 @@ fn total_eq_test() {
     fn inner<T, L, L2>(lhs: &NList<T, L>, rhs: &NList<T, L2>) -> bool 
     where
         T: core::cmp::Eq,
-        L: PeanoInt,
-        L2: PeanoInt,
+        L: Int,
+        L2: Int,
     {
         lhs.total_eq(rhs)
     }
@@ -58,7 +58,7 @@ fn eq_trait_test() {
     fn inner<T, L>(lhs: &NList<T, L>, rhs: &NList<T, L>) -> bool 
     where
         T: core::cmp::Eq,
-        L: PeanoInt,
+        L: Int,
     {
         _ = assert_impls_eq::<NList<T, L>>;
 
@@ -96,8 +96,8 @@ fn inherent_cmp_and_partial_cmp_trait_test() {
     fn inner_inherent_cmp<T, L, L2>(lhs: &NList<T, L>, rhs: &NList<T, L2>) -> Ordering 
     where
         T: Ord,
-        L: PeanoInt,
-        L2: PeanoInt,
+        L: Int,
+        L2: Int,
     {
         lhs.cmp(rhs)
     }
@@ -105,8 +105,8 @@ fn inherent_cmp_and_partial_cmp_trait_test() {
     fn inner_trait_partial_cmp<T, U, L, L2>(lhs: &NList<T, L>, rhs: &NList<U, L2>) -> Ordering 
     where
         T: PartialOrd<U>,
-        L: PeanoInt,
-        L2: PeanoInt,
+        L: Int,
+        L2: Int,
     {
         PartialOrd::partial_cmp(lhs, rhs).unwrap()
     }
@@ -168,7 +168,7 @@ fn trait_cmp_test() {
     fn inner_trait_cmp<T, L>(lhs: &NList<T, L>, rhs: &NList<T, L>) -> Ordering 
     where
         T: Ord,
-        L: PeanoInt,
+        L: Int,
     {
         Ord::cmp(lhs, rhs)
     }

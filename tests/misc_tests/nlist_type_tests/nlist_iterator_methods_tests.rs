@@ -1,4 +1,4 @@
-use nlist::{NList, PeanoInt, Peano, nlist, peano};
+use nlist::{NList, Int, Peano, nlist, peano};
 
 use konst::option;
 
@@ -20,7 +20,7 @@ fn rec_all_test() {
         ($list:ident ($($reffness:tt)*) => $($invocation:tt)*) => ({
             const fn all_odd<L>($list: $($reffness)* NList<u128, L>) -> bool
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -51,7 +51,7 @@ fn rec_all_test() {
     test_case!{list ()=>
         const fn inner<L>(elem: u128, next: NList<u128, L>) -> bool
         where
-            L: PeanoInt
+            L: Int
         {
             let next = next.assert_copy();
             
@@ -81,7 +81,7 @@ fn rec_any_test() {
         ($list:ident ($($reffness:tt)*) => $($invocation:tt)*) => ({
             const fn any_odd<L>($list: $($reffness)* NList<u128, L>) -> bool
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -112,7 +112,7 @@ fn rec_any_test() {
     test_case!{list ()=>
         const fn inner<L>(elem: u128, next: NList<u128, L>) -> bool
         where
-            L: PeanoInt
+            L: Int
         {
             let next = next.assert_copy();
             
@@ -129,7 +129,7 @@ fn copy_test() {
     const fn inner<T, L>(list: &NList<T, L>) -> NList<T, L>
     where
         T: Copy,
-        L: PeanoInt,
+        L: Int,
     {
         list.copy()
     }
@@ -145,8 +145,8 @@ fn concat_test() {
     const fn inner<T, LA, LB>(lhs: NList<T, LA>, rhs: NList<T, LB>) -> NList<T, peano::Add<LA, LB>>
     where
         T: Copy,
-        LA: PeanoInt,
-        LB: PeanoInt,
+        LA: Int,
+        LB: Int,
     {
         lhs.concat(rhs)
     }
@@ -206,7 +206,7 @@ fn rec_find_map_test() {
         ($list:ident ($($reffness:tt)*) => $($invocation:tt)*) => ({
             const fn four_sub<L>($list: $($reffness)* NList<u8, L>) -> Option<u128>
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -250,7 +250,7 @@ fn rec_find_map_test() {
     test_case!{list ()=>
         const fn inner<L>(elem: u8, next: NList<u8, L>) -> Option<u128>
         where
-            L: PeanoInt
+            L: Int
         {
             let next = next.assert_copy();
             let elem = elem as u128;
@@ -266,8 +266,8 @@ fn rec_find_map_test() {
 fn flatten_test() {
     const fn inner<T, L, L2>(list: NList<NList<T, L2>, L>) -> NList<T, peano::Mul<L, L2>>
     where
-        L: PeanoInt,
-        L2: PeanoInt,
+        L: Int,
+        L2: Int,
     {
         list.flatten()
     }
@@ -334,7 +334,7 @@ fn fold_rec_test() {
         ($list:ident ($($reffness:tt)*) => $($invocation:tt)*) => ({
             const fn add_up<L>($list: $($reffness)* NList<u8, L>) -> u128
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -366,7 +366,7 @@ fn fold_rec_test() {
     test_case!{list ()=>
         const fn inner<L>(elem: u8, next: NList<u8, L>) -> u128
         where
-            L: PeanoInt
+            L: Int
         {
             elem as u128 + add_up(next)
         }
@@ -402,7 +402,7 @@ fn for_each_rec_test() {
             #[allow(unused_parens)]
             $($const)? fn add_up<L>($list: $($reffness)* NList<u8, L>, $accum: &mut u128)
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -463,7 +463,7 @@ fn map_test() {
         ($list:ident ($($reffness:tt)*) => $($invocation:tt)*) => ({
             const fn double<L>($list: $($reffness)* NList<u8, L>) -> NList<u16, L>
             where
-                L: PeanoInt
+                L: Int
             {
                 $($invocation)*
             }
@@ -503,7 +503,7 @@ fn map_test() {
     test_case!{list ()=>
         const fn inner<L>(elem: u8, next: NList<u8, L>) -> (u16, NList<u16, L>)
         where
-            L: PeanoInt
+            L: Int
         {
             (elem as u16 * 2, double(next))
         }

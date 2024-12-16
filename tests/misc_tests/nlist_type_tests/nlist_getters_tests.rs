@@ -1,5 +1,5 @@
-use nlist::{Cons, Peano, PeanoInt, Nil, Node, NList, nlist};
-use nlist::peano::PlusOne;
+use nlist::{Cons, Peano, Int, Nil, Node, NList, nlist};
+use nlist::peano::Nat;
 use nlist::receiver::{HktApply, Receiver};
 
 
@@ -16,7 +16,7 @@ fn into_node_test() {
 
     const fn into_cons_node<T, L>(list: NList<T, L>) -> Node<T, L>
     where
-        L: PeanoInt
+        L: Int
     {
         list.into_node()
     }
@@ -47,9 +47,9 @@ fn into_node_test() {
 #[test]
 fn head_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &NList<T, PlusOne<L>>) -> &T
+    const fn inner<T, L>(list: &NList<T, Nat<L>>) -> &T
     where
-        L: PeanoInt
+        L: Int
     {
         list.head()
     }
@@ -80,9 +80,9 @@ fn head_test() {
 #[test]
 fn head_mut_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &mut NList<T, PlusOne<L>>) -> &mut T
+    const fn inner<T, L>(list: &mut NList<T, Nat<L>>) -> &mut T
     where
-        L: PeanoInt
+        L: Int
     {
         list.head_mut()
     }
@@ -124,9 +124,9 @@ fn head_mut_test() {
 
 #[test]
 fn into_head_test() {
-    fn inner<T, L>(list: NList<T, PlusOne<L>>) -> T
+    fn inner<T, L>(list: NList<T, Nat<L>>) -> T
     where
-        L: PeanoInt
+        L: Int
     {
         list.into_head()
     }
@@ -157,9 +157,9 @@ fn into_head_test() {
 #[test]
 fn tail_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &NList<T, PlusOne<L>>) -> &NList<T, L>
+    const fn inner<T, L>(list: &NList<T, Nat<L>>) -> &NList<T, L>
     where
-        L: PeanoInt
+        L: Int
     {
         list.tail()
     }
@@ -190,9 +190,9 @@ fn tail_test() {
 #[test]
 fn tail_mut_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &mut NList<T, PlusOne<L>>) -> &mut NList<T, L>
+    const fn inner<T, L>(list: &mut NList<T, Nat<L>>) -> &mut NList<T, L>
     where
-        L: PeanoInt
+        L: Int
     {
         list.tail_mut()
     }
@@ -223,10 +223,10 @@ fn tail_mut_test() {
 macro_rules! into_tail_test_ {
     ($method:ident, $($const:ident $bound:tt)?, $binding_kind:ident $binding:ident) => {
         // asserts usability in const and generic context
-        $($const)? fn inner<T, L>(list: NList<T, PlusOne<L>>) -> NList<T, L>
+        $($const)? fn inner<T, L>(list: NList<T, Nat<L>>) -> NList<T, L>
         where
             $(T: $bound,)?
-            L: PeanoInt
+            L: Int
         {
             list.$method()
         }
@@ -268,9 +268,9 @@ fn into_tail_const_test() {
 #[test]
 fn split_head_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &NList<T, PlusOne<L>>) -> (&T, &NList<T, L>)
+    const fn inner<T, L>(list: &NList<T, Nat<L>>) -> (&T, &NList<T, L>)
     where
-        L: PeanoInt
+        L: Int
     {
         list.split_head()
     }
@@ -301,9 +301,9 @@ fn split_head_test() {
 #[test]
 fn split_head_mut_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: &mut NList<T, PlusOne<L>>) -> (&mut T, &mut NList<T, L>)
+    const fn inner<T, L>(list: &mut NList<T, Nat<L>>) -> (&mut T, &mut NList<T, L>)
     where
-        L: PeanoInt
+        L: Int
     {
         list.split_head_mut()
     }
@@ -334,9 +334,9 @@ fn split_head_mut_test() {
 #[test]
 fn into_split_head_test() {
     // asserts usability in const and generic context
-    const fn inner<T, L>(list: NList<T, PlusOne<L>>) -> (T, NList<T, L>)
+    const fn inner<T, L>(list: NList<T, Nat<L>>) -> (T, NList<T, L>)
     where
-        L: PeanoInt
+        L: Int
     {
         list.into_split_head()
     }
@@ -373,9 +373,9 @@ fn split_head_poly_test() {
         HktApply<'a, P::Hkt, T>, 
         HktApply<'a, P::Hkt, NList<T, L>>
     ) where
-        P: Receiver<'a, NList<T, PlusOne<L>>>,
+        P: Receiver<'a, NList<T, Nat<L>>>,
         T: 'a,
-        L: PeanoInt,
+        L: Int,
     {
         NList::split_head_poly(list)
     }

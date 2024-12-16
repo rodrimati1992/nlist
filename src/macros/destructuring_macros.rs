@@ -47,13 +47,13 @@
 /// ### Pattern matching
 /// 
 /// ```rust
-/// use nlist::{NList, PeanoInt, PlusOne, nlist, nlist_pat};
+/// use nlist::{NList, Int, Nat, nlist, nlist_pat};
 /// 
 /// assert!(starts_with_zero(&nlist![0, 1, 2]));
 /// assert!(!starts_with_zero(&nlist![1]));
 /// assert!(!starts_with_zero(&nlist![1, 2, 3]));
 /// 
-/// const fn starts_with_zero<L: PeanoInt>(nlist: &NList<u32, PlusOne<L>>) -> bool {
+/// const fn starts_with_zero<L: Int>(nlist: &NList<u32, Nat<L>>) -> bool {
 ///     matches!(nlist, nlist_pat![0, ..])
 /// }
 /// ```
@@ -63,7 +63,7 @@
 macro_rules! nlist_pat {
     ($($patterns:tt)*) => ( 
         $crate::__nlist_pat!(
-            ($crate::__nlist_count_elems!(($crate::Zero) $($patterns)*)) 
+            ($crate::__nlist_count_elems!(($crate::Zeros) $($patterns)*)) 
             $($patterns)*
         )
     );
@@ -102,7 +102,7 @@ macro_rules! __nlist_count_elems {
         _
     );
     (($($len:tt)*) $pati:pat $(, $($rest:tt)*)?) => (
-        $crate::__nlist_count_elems!{($crate::PlusOne<$($len)*>) $($($rest)*)?}
+        $crate::__nlist_count_elems!{($crate::Nat<$($len)*>) $($($rest)*)?}
     );
     (($($len:tt)*) $(,)?) => (
         $($len)*
@@ -128,7 +128,7 @@ macro_rules! __nlist_count_elems {
 /// # Example
 /// 
 /// ```rust
-/// use nlist::{NList, PeanoInt, Peano, nlist, peano, unlist};
+/// use nlist::{NList, Int, Peano, nlist, peano, unlist};
 /// 
 /// assert_eq!(multisplit(nlist![3, 5]), (3, 5, nlist![]));
 /// assert_eq!(multisplit(nlist![8, 13, 21]), (8, 13, nlist![21]));
@@ -136,7 +136,7 @@ macro_rules! __nlist_count_elems {
 /// 
 /// const fn multisplit<T, L>(list: NList<T, peano::Add<Peano!(2), L>>) -> (T, T, NList<T, L>)
 /// where
-///     L: PeanoInt
+///     L: Int
 /// {
 ///     unlist!{[a, b, c @ ..] = list}
 ///     
@@ -145,10 +145,10 @@ macro_rules! __nlist_count_elems {
 /// ```
 /// If the `unlist!{...}` line is replaced with
 /// ```rust,compile_fail
-/// # use nlist::{NList, PeanoInt, Peano, nlist, nlist_pat, peano, unlist};
+/// # use nlist::{NList, Int, Peano, nlist, nlist_pat, peano, unlist};
 /// # const fn multisplit<T, L>(list: NList<T, peano::Add<Peano!(2), L>>) -> (T, T, NList<T, L>)
 /// # where
-/// #   L: PeanoInt
+/// #   L: Int
 /// # {
 ///     let nlist_pat![a, b, c @ ..] = list;
 /// #   (a, b, c)
@@ -156,7 +156,7 @@ macro_rules! __nlist_count_elems {
 /// ```
 /// it causes this compilation error as of Rust 1.83.0:
 /// ```text
-/// error[E0493]: destructor of `NList<T, nlist::PlusOne<nlist::PlusOne<L>>>` cannot be evaluated at compile-time
+/// error[E0493]: destructor of `NList<T, nlist::Nat<nlist::Nat<L>>>` cannot be evaluated at compile-time
 ///   --> src/macros/destructuring_macros.rs:134:27
 ///    |
 /// 6  | const fn multisplit<T, L>(list: NList<T, peano::Add<Peano!(2), L>>) -> (T, T, NList<T, L>)
@@ -169,7 +169,7 @@ macro_rules! __nlist_count_elems {
 #[macro_export]
 macro_rules! unlist {
     ([$($patterns:tt)*] = $val:expr $(;)?) => ( 
-        let list: $crate::NList<_, $crate::__nlist_count_elems!(($crate::Zero) $($patterns)*)> = 
+        let list: $crate::NList<_, $crate::__nlist_count_elems!(($crate::Zeros) $($patterns)*)> = 
             $val;
 
         $crate::__unlist!((list) $($patterns)*)

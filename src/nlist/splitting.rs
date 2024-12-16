@@ -3,10 +3,10 @@ use konst::destructure;
 use typewit::{const_marker::Bool, TypeCmp, TypeEq};
 
 use super::NList;
-use crate::peano::{self, PeanoInt, PeanoWit, PlusOne, SubOneSat, Zero};
+use crate::peano::{self, Int, IntWit, Nat, SubOneSat, Zeros};
 use crate::boolean::{IfTrueI, Boolean};
 
-impl<T, L: PeanoInt> NList<T, L> {
+impl<T, L: Int> NList<T, L> {
     /// Splits this list at the `At` index.
     ///
     /// # Examples
@@ -25,7 +25,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// ```
     pub const fn split_at<At>(self) -> (NList<T, At>, NList<T, peano::SubSat<L, At>>)
     where
-        At: peano::PeanoInt<IsLe<L> = Bool<true>>,
+        At: peano::Int<IsLe<L> = Bool<true>>,
     {
         self.split_at_alt(TypeEq::new::<At::IsLe<L>>())
     }
@@ -41,7 +41,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// only calling `split_at_alt` when the split index is in bounds.
     ///
     /// ```rust
-    /// use nlist::{NList, NListFn, Peano, PeanoInt, PeanoInt as PInt, nlist, peano};
+    /// use nlist::{NList, NListFn, Peano, Int, Int as PInt, nlist, peano};
     /// 
     /// use nlist::boolean::{Boolean, BoolWitG};
     /// 
@@ -57,7 +57,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     /// 
     /// fn insert_at_3<L>(list: NList<u32, L>) -> NList<u32, peano::Add<L, Added>> 
     /// where
-    ///     L: PeanoInt   
+    ///     L: Int   
     /// {
     ///     let to_add = nlist![100, 103];
     /// 
@@ -72,7 +72,7 @@ impl<T, L: PeanoInt> NList<T, L> {
     ///         }
     ///     };
     /// 
-    ///     // Because the compiler doesn't understand arithmetic properties of PeanoInt,
+    ///     // Because the compiler doesn't understand arithmetic properties of Int,
     ///     // this function has to assert lengths in the above const block.
     ///     //
     ///     // `is_le_te`: proof that `At <= L`, which allows splitting the list at `At`.
@@ -94,48 +94,48 @@ impl<T, L: PeanoInt> NList<T, L> {
         at_le_l_proof: TypeEq<At::IsLe<L>, Bool<true>>,
     ) -> (NList<T, At>, NList<T, peano::SubSat<L, At>>)
     where
-        At: peano::PeanoInt,
+        At: peano::Int,
     {
         enum SplitState<L, At, Rem>
         where
-            L: PeanoInt,
-            At: PeanoInt,
-            Rem: PeanoInt,
+            L: Int,
+            At: Int,
+            Rem: Int,
         {
             Iterating {
-                input_te: TypeEq<L, PlusOne<SubOneSat<L>>>,
-                at_te: TypeEq<At, PlusOne<SubOneSat<At>>>,
+                input_te: TypeEq<L, Nat<SubOneSat<L>>>,
+                at_te: TypeEq<At, Nat<SubOneSat<At>>>,
                 // necessary so that, when this enum is `Self::Finished`,
                 // the recursive call to `inner` in the dead `Iterating` branch
                 // doesn't cause const panics.
                 rem_te: TypeEq<peano::Min<SubOneSat<L>, Rem>, Rem>,
             },
             Finished {
-                at_te: TypeEq<At, Zero>,
+                at_te: TypeEq<At, Zeros>,
                 rem_te: TypeEq<L, Rem>,
             },
         }
 
         impl<L, At, Rem> SplitState<L, At, Rem>
         where
-            L: PeanoInt,
-            At: PeanoInt,
-            Rem: PeanoInt,
+            L: Int,
+            At: Int,
+            Rem: Int,
         {
             const NEW: Self = match (
-                L::PEANO_WIT,
-                At::PEANO_WIT,
+                L::INT_WIT,
+                At::INT_WIT,
                 peano::eq::<peano::Min<SubOneSat<L>, Rem>, Rem>(),
                 peano::eq::<L, Rem>(),
             ) {
-                (PeanoWit::PlusOne(input_te), PeanoWit::PlusOne(at_te), TypeCmp::Eq(rem_te), _) => {
+                (IntWit::Nat(input_te), IntWit::Nat(at_te), TypeCmp::Eq(rem_te), _) => {
                     SplitState::Iterating {
                         input_te,
                         at_te,
                         rem_te,
                     }
                 }
-                (_, PeanoWit::Zero(at_te), _, TypeCmp::Eq(rem_te)) => {
+                (_, IntWit::Zeros(at_te), _, TypeCmp::Eq(rem_te)) => {
                     SplitState::Finished { at_te, rem_te }
                 }
                 _ => concat_panic! {
@@ -149,9 +149,9 @@ impl<T, L: PeanoInt> NList<T, L> {
 
         const fn inner<T, L, At, Rem>(list: NList<T, L>) -> (NList<T, At>, NList<T, Rem>)
         where
-            L: PeanoInt,
-            At: PeanoInt,
-            Rem: PeanoInt,
+            L: Int,
+            At: Int,
+            Rem: Int,
         {
             match SplitState::<L, At, Rem>::NEW {
                 SplitState::Iterating {
@@ -186,6 +186,6 @@ typewit::type_fn!{
     impl<B> B => (NList<T, IfTrueI<B, At, L>>, NList<T, peano::SubSat<L, At>>)
     where
         B: Boolean,
-        At: PeanoInt,
-        L: PeanoInt,
+        At: Int,
+        L: Int,
 }
